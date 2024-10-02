@@ -21,3 +21,10 @@ void Settings::LoadSettings() noexcept
     logger::info("Loaded settings");
     logger::info("");
 }
+
+void Settings::LoadForms() noexcept
+{
+    const char* the_mod = "STweaks.esp";
+    auto dh = RE::TESDataHandler::GetSingleton();
+    stamina_spell_jump = dh->LookupForm<RE::SpellItem>(0x801, the_mod);
+}
