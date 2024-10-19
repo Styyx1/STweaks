@@ -10,6 +10,7 @@ void Settings::LoadSettings() noexcept
     ini.LoadFile(R"(.\Data\SKSE\Plugins\STweaks.ini)");
 
     debug_logging = ini.GetBoolValue("Log", "Debug");
+    enable_damage_ranges = ini.GetBoolValue("General", "bEnableDamageRanges");
 
     if (debug_logging) {
         spdlog::set_level(spdlog::level::debug);

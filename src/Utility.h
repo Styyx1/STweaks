@@ -3,6 +3,36 @@
 class Utility : public Singleton<Utility>
 {
 public:
+
+    static void AddItem(RE::Actor* a, RE::TESBoundObject* item, RE::ExtraDataList* extraList, int count, RE::TESObjectREFR* fromRefr)
+    {
+        using func_t = decltype(AddItem);
+        REL::Relocation<func_t> func{ REL::RelocationID(36525, 37525)};
+        return func(a, item, extraList, count, fromRefr);
+    }
+
+    static void AddItemPlayer(RE::TESBoundObject* item, int count)
+    {
+        return AddItem(RE::PlayerCharacter::GetSingleton(), item, nullptr, count, nullptr);
+    }
+
+    static int RemoveItemPlayer(RE::TESBoundObject* item, int count)
+    {
+        using func_t = decltype(RemoveItemPlayer);
+        REL::Relocation<func_t> func{ REL::RelocationID(16564, 16919)};
+        return func(item, count);
+    }
+
+    int get_item_count(RE::Actor* a, RE::TESBoundObject* item)
+    {
+        if (auto changes = a->GetInventoryChanges()) {
+            using func_t = int(RE::InventoryChanges*, RE::TESBoundObject*);
+            REL::Relocation<func_t> func{ REL::RelocationID(15868, 16047)};
+            return func(changes, item);
+        }
+        return 0;
+    }
+
     void LogBool(bool bLog) {
         if (bLog) {
             logger::debug("true");
@@ -42,6 +72,16 @@ public:
         return nullptr;
     }
 
+    float GetRandomFloat(float a_min, float a_max)
+    {
+        static std::random_device        rd;
+        static std::mt19937              gen(rd());
+        std::uniform_real_distribution<> distrib(a_min, a_max);
+        logger::debug("random float is {}", (std::round((distrib(gen) * 100)) / 100));
+        return std::round((distrib(gen) * 100)) / 100;
+    }
+
+
     inline static bool IsDualWielding(RE::Actor* a_actor)
     {
         auto weapon = a_actor->GetAttackingWeapon();
@@ -61,7 +101,7 @@ public:
             std::vector<RE::Actor*> result;
             if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
                 if (a_ignorePlayer && processLists->numberHighActors == 0) {
-                    dlog("no process list");
+                    logger::debug("no process list");
                     return result;
                 }
 
@@ -81,11 +121,11 @@ public:
                 }
 
                 if (!a_ignorePlayer) {
-                    get_actor_within_radius(Cache::GetPlayerSingleton());
+                    get_actor_within_radius(RE::PlayerCharacter::GetSingleton());
                 }
 
                 if (!result.empty()) {
-                    dlog("vector is not empty");
+                    logger::debug("vector is not empty");
                     return result;
                 }
             }
