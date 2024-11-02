@@ -76,11 +76,9 @@ public:
     {
         static std::random_device        rd;
         static std::mt19937              gen(rd());
-        std::uniform_real_distribution<> distrib(a_min, a_max);
-        logger::debug("random float is {}", (std::round((distrib(gen) * 100)) / 100));
-        return std::round((distrib(gen) * 100)) / 100;
+        std::uniform_real_distribution<float> distrib(a_min, a_max);
+        return std::roundf((distrib(gen) * 100)) / 100;
     }
-
 
     inline static bool IsDualWielding(RE::Actor* a_actor)
     {

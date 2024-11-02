@@ -25,6 +25,19 @@ namespace Hooks
         
     };
 
+    class AdjustActiveEffect
+    {
+    public:
+        static void thunk(RE::ActiveEffect* a_this, float a_power, bool a_onlyHostile);
+        
+        
+        static void Install();
+        
+    private:
+        static inline REL::Relocation<decltype(thunk)> func;
+    };
+
+
 } // namespace Hooks
 
 

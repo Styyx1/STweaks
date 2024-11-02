@@ -6,7 +6,6 @@
 void Listener(SKSE::MessagingInterface::Message* message) noexcept
 {
     if (message->type == SKSE::MessagingInterface::kDataLoaded) {
-        Settings::LoadSettings();
         Hooks::Install();
     }
 }
@@ -22,6 +21,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
     logger::info("{} {} is loading...", name, version);
 
     Init(skse);
+    SKSE::AllocTrampoline(1 << 10);
 
     if (const auto messaging{ SKSE::GetMessagingInterface() }; !messaging->RegisterListener(Listener)) {
         return false;
@@ -29,6 +29,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 
     logger::info("{} has finished loading.", name);
     logger::info("");
+    Settings::LoadSettings();
 
     return true;
 }
