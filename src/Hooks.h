@@ -4,7 +4,7 @@ namespace Hooks
 {
     void Install();
 
-    class CombatHit : public Singleton<CombatHit>
+    class CombatHit
     {
     public:
         static void Install();
@@ -15,10 +15,10 @@ namespace Hooks
         static inline REL::Relocation<decltype(&CHit)> _originalCall;
     };
 
-    class MainUpdate : public Singleton<MainUpdate>
+    class MainUpdate
     {
     public:
-        static i32 Thunk() noexcept;
+        static int32_t Thunk() noexcept;
         static void InstallUpdate();
     private: 
         inline static REL::Relocation<decltype(&Thunk)> func;

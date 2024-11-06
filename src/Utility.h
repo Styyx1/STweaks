@@ -1,6 +1,6 @@
 #pragma once
 
-class Utility : public Singleton<Utility>
+class Utility 
 {
 public:
 
@@ -23,7 +23,7 @@ public:
         return func(item, count);
     }
 
-    int get_item_count(RE::Actor* a, RE::TESBoundObject* item)
+    static int get_item_count(RE::Actor* a, RE::TESBoundObject* item)
     {
         if (auto changes = a->GetInventoryChanges()) {
             using func_t = int(RE::InventoryChanges*, RE::TESBoundObject*);
@@ -33,17 +33,17 @@ public:
         return 0;
     }
 
-    void LogBool(bool bLog) {
+    static void LogBool(bool bLog) {
         if (bLog) {
             logger::debug("true");
         }
         else
             logger::debug("false");
     }
-    void LogItemCountMiscItem(RE::TESObjectMISC* item, int count) {
+    static void LogItemCountMiscItem(RE::TESObjectMISC* item, int count) {
         logger::debug("player has {} of {} in the inventory", count, item->GetName());
     }
-    void LogGlobal(RE::TESGlobal* global)
+    static void LogGlobal(RE::TESGlobal* global)
     {
         logger::debug("lookup successfull global {} with the value {} found", global->GetFormEditorID(), global->value);
     }
@@ -72,7 +72,7 @@ public:
         return nullptr;
     }
 
-    float GetRandomFloat(float a_min, float a_max)
+    static float GetRandomFloat(float a_min, float a_max)
     {
         static std::random_device        rd;
         static std::mt19937              gen(rd());

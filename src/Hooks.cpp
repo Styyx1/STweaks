@@ -19,15 +19,13 @@ namespace Hooks
     }
     void CombatHit::RandomiseDamage(RE::Actor* a_this, RE::HitData* a_hitData)
     {
-        const Settings* settings = Settings::GetSingleton();
 
-        if (settings->enable_damage_ranges) {
+        if (Settings::enable_damage_ranges) {
             float remaining = a_hitData->totalDamage;
-            Utility* util = Utility::GetSingleton();
             if (a_hitData->weapon && !a_hitData->weapon->IsHandToHandMelee()) {
                 logger::debug("----------------------------------------------------");
                 logger::debug("started hooked damage calc for {} you got hit by: {}", a_this->GetName(), a_hitData->aggressor.get().get()->GetDisplayFullName());
-                float rand_mult = util->GetRandomFloat(Settings::CalcPerc(Settings::damage_range_weapon, false), Settings::CalcPerc(Settings::damage_range_weapon, true));
+                float rand_mult = Utility::GetRandomFloat(Settings::CalcPerc(Settings::damage_range_weapon, false), Settings::CalcPerc(Settings::damage_range_weapon, true));
                 logger::debug("multiplier is {}", rand_mult);
                 remaining *= rand_mult;
                 logger::debug("new damage for melee is {}. Original damage was: {} \n", remaining, a_hitData->totalDamage);
@@ -48,12 +46,8 @@ namespace Hooks
         logger::debug("----------------------------------------------------");
         _originalCall(a_this, a_hitData);
     }
-    i32 MainUpdate::Thunk() noexcept
+    int32_t MainUpdate::Thunk() noexcept
     {
-        RE::BGSSaveLoadManager* save_manager = RE::BGSSaveLoadManager::GetSingleton();
-        save_manager->PopulateSaveList();
-
-
         return func();
     }
     void MainUpdate::InstallUpdate()
@@ -66,8 +60,6 @@ namespace Hooks
     // https://github.com/powerof3/MagicSneakAttacks/blob/275255b26492115557c7bfa3cb7c4a79e83f2f3d/src/Hooks.cpp#L29 
     void AdjustActiveEffect::thunk(RE::ActiveEffect* a_this, float a_power, bool a_onlyHostile)
     {
-        
-        Utility* util = Utility::GetSingleton();
         const auto attacker = a_this->GetCasterActor();
         const auto target = a_this->GetTargetActor();
         const auto effect = a_this->GetBaseObject();
@@ -75,7 +67,7 @@ namespace Hooks
 
         if (attacker && target && spell && effect && effect->IsHostile()) {
             if (const auto projectile = effect->data.projectileBase; projectile) {
-                if (auto damage_ranges = util->GetRandomFloat(Settings::CalcPerc(Settings::damage_range_magic, false), Settings::CalcPerc(Settings::damage_range_magic, true))) {
+                if (auto damage_ranges = Utility::GetRandomFloat(Settings::CalcPerc(Settings::damage_range_magic, false), Settings::CalcPerc(Settings::damage_range_magic, true))) {
                     logger::debug("original damag is: {}", a_this->magnitude);
                     logger::debug("damage_ranges is {}", damage_ranges);
                     a_this->magnitude *= damage_ranges;

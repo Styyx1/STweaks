@@ -1,6 +1,11 @@
 #include "HitEvent.h"
 
 namespace HitHandler {
+    HitEventH* HitEventH::GetSingleton()
+    {
+        static HitEventH singleton;
+        return &singleton;
+    }
     RE::BSEventNotifyControl HitEventH::ProcessEvent(const RE::TESHitEvent* a_event, RE::BSTEventSource<RE::TESHitEvent>* a_eventSource) noexcept
     {
         using HitFlag = RE::TESHitEvent::Flag;
@@ -18,6 +23,11 @@ namespace HitHandler {
 
         // Do stuff
         return RE::BSEventNotifyControl();
+    }
+    void HitEventH::Register()
+    {
+        RE::ScriptEventSourceHolder* eventHolder = RE::ScriptEventSourceHolder::GetSingleton();
+        eventHolder->AddEventSink(HitEventH::GetSingleton());
     }
 }
 
