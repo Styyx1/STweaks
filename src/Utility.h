@@ -1,5 +1,5 @@
 #pragma once
-
+#include "cache.h"
 class Utility 
 {
 public:
@@ -156,6 +156,43 @@ public:
             caster->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)->CastSpellImmediate(spell, false, target, 1.0F, false, 0.0F, nullptr);
         }
     }
+
+    static bool HasSpell(RE::Actor* actor, RE::SpellItem* spell)
+    {	
+        using func_t = decltype(&Utility::HasSpell);
+
+        REL::Relocation<func_t> func{ Cache::HasSpellAddress };
+
+        return func(actor, spell);
+    }
+    inline static REL::Relocation<decltype(HasSpell)> _HasSpell;
+
+    static bool IsMoving(RE::PlayerCharacter* player)
+    {
+        auto playerState = player->AsActorState();
+        return (static_cast<bool>(playerState->actorState1.movingForward) || static_cast<bool>(playerState->actorState1.movingBack) || static_cast<bool>(playerState->actorState1.movingLeft) || static_cast<bool>(playerState->actorState1.movingRight));
+    }
+
+
+    struct Actor {
+        static inline bool jumpHeightPlayer(RE::PlayerCharacter* player, float height_mod) 
+        {
+            if (!player->IsInMidair()) {
+                player->GetCharController()->jumpHeight *= height_mod;
+                return true;
+            }
+            return false;
+        }
+        static inline bool applyDebuffs(RE::PlayerCharacter* player, RE::SpellItem* a_debuff, bool a_check) {
+            if (a_check) {
+                ApplySpell(player, player, a_debuff);
+                return true;
+            }
+            else return false;
+        }
+    };
+
+
 
 
 };

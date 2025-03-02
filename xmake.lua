@@ -6,7 +6,7 @@ includes("lib/commonlibsse-ng")
 
 -- set project
 set_project("stweaks")
-set_version("0.0.0")
+set_version("1.0.0")
 set_license("GPL-3.0")
 
 -- set defaults
@@ -39,6 +39,8 @@ target("stweaks")
         author = "styyx",
         description = "various tweaks to requiem including mechanic changes"
     })
+
+    add_extrafiles("contrib/**.ini")
 
     -- add src files
     add_files("src/**.cpp")
