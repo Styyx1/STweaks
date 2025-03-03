@@ -52,17 +52,6 @@ namespace Hooks
         static inline REL::Relocation<decltype(JumpHeightGetScale)> func;
     };
 
-    class ActorUpdateHook
-    {
-    public: 
-        static void InstallUpdateActor();
-    private:
-        static bool done;
-        static bool once;
-        static void ActorUpdate(RE::Character* a_this, float a_delta);
-        static inline REL::Relocation<decltype(&ActorUpdate)> _ActorUpdate;
-    };
-
     class DealtMeleeDamage
     {
     public:
@@ -71,18 +60,6 @@ namespace Hooks
         static float MeleeDamage(void* _weap, RE::ActorValueOwner* a, float DamageMult, char isbow);
         static inline REL::Relocation<decltype(&MeleeDamage)> _MeleeDamageCall;
     };
-
-    // unused, might revisit later
-
-    class OverEncumbered
-    {
-    public:        
-        static void Install();
-    private:
-        static bool IsOverEncumberedEX(RE::Actor* a_actor);
-        static inline REL::Relocation<decltype(IsOverEncumberedEX)> func;        
-    };
-
 
     static RE::ActorValue LookupActorValueByName(const char* av_name)
     {

@@ -2,6 +2,7 @@
 
 void Settings::LoadSettings() noexcept
 {
+    logger::info("--------------------------------");
     logger::info("Loading settings");
 
     CSimpleIniA ini;
@@ -11,9 +12,6 @@ void Settings::LoadSettings() noexcept
 
     
     //int
-    damage_range_weapon = (int)ini.GetDoubleValue("SettingValues", "iDamageRangeWeapons", 15);
-    damage_range_magic = (int)ini.GetDoubleValue("SettingValues", "iDamageRangeMagic", 15);
-
     weapon_upper_range = (int)ini.GetDoubleValue("SettingValues", "iUpperRangeWeapons", 15);
     weapon_lower_range = (int)ini.GetDoubleValue("SettingValues", "iLowerRangeWeapons", 15);
     magic_upper_range = (int)ini.GetDoubleValue("SettingValues", "iUpperRangeMagic", 15);
@@ -21,8 +19,7 @@ void Settings::LoadSettings() noexcept
 
     //float
     sneak_height_modifier = (float)ini.GetDoubleValue("SettingValues", "fSneakJumpModifier", 0.25);    
-    jump_modifier_heavy = (float)ini.GetDoubleValue("SettingValues", "fJumpModifierHeavy", 0.4f);
-    jump_modifier_light = (float)ini.GetDoubleValue("SettingValues", "fJumpModifierLight", 0.85f);
+
     //bool
     enable_mass_based_jump_height = ini.GetBoolValue("Toggles", "bMassBasedJump", true);
     enable_damage_ranges = ini.GetBoolValue("Toggles", "bEnableDamageRanges", true);
@@ -30,6 +27,7 @@ void Settings::LoadSettings() noexcept
     enable_carry_weight_debuffs = ini.GetBoolValue("Toggles", "bToggleCarryWeightDebuff", true);
     enable_sneak_stamina = ini.GetBoolValue("Toggles", "bEnableSneakStamina", true);
     enable_foll_change = ini.GetBoolValue("Toggles", "bEnableFollowerDamageChange", true);
+
     //debug logging
     debug_logging = ini.GetBoolValue("DebugLogging", "bDebugLoggingEnable");
 
@@ -41,33 +39,30 @@ void Settings::LoadSettings() noexcept
         logger::debug("Debug logging enabled");
     }
     //set range limits
-    damage_range_weapon = std::clamp(damage_range_weapon, 1, 99);
-    logger::debug("weapon damage range is {}", damage_range_weapon);
-    damage_range_magic = std::clamp(damage_range_magic, 1, 99);
-    logger::debug("magic damage range is {}", damage_range_magic);
 
     weapon_upper_range = std::clamp(weapon_upper_range, 1, 99);
+    logger::debug("weapon upper range is {}", weapon_upper_range);
     weapon_lower_range = std::clamp(weapon_lower_range, 1, 99);
+    logger::debug("weapon lower range is {}", weapon_lower_range);
     magic_upper_range = std::clamp(magic_upper_range, 1, 99);
+    logger::debug("magic upper range is {}", magic_upper_range);
     magic_lower_range = std::clamp(magic_lower_range, 1, 99);
-
-
-    //set jump height limits (unused)
-    jump_modifier_heavy = std::clamp(jump_modifier_heavy, 0.1f, 1.0f);
-    jump_modifier_light = std::clamp(jump_modifier_light, 0.1f, 1.0f);
+    logger::debug("magic lower range is {}", magic_lower_range);
 
     logger::info("Loaded settings");
-    logger::info("");
+    logger::info("--------------------------------");
 }
 
 void Settings::LoadForms() noexcept
 {
-    //const int stamina_spell_jump_ID = 0x801;
+    logger::info("--------------------------------");
+    logger::info("Loading Forms");
     const int sneak_stamina_spell_ID = 0x804;
     const char* the_mod = "STweaks.esp";
     auto dh = RE::TESDataHandler::GetSingleton();
-    //stamina_spell_jump = dh->LookupForm<RE::SpellItem>(stamina_spell_jump_ID, the_mod);
     sneak_stamina_spell = dh->LookupForm<RE::SpellItem>(sneak_stamina_spell_ID, the_mod);
+    logger::info("Loaded Forms");
+    logger::info("--------------------------------");
 }
 
 float Settings::CalcPerc(int a_input, bool a_high)

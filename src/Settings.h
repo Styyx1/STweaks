@@ -8,8 +8,6 @@ public:
     static float CalcPerc(int a_input, bool a_high);
     inline static bool debug_logging{false};
     inline static bool enable_damage_ranges{true};
-    inline static int damage_range_magic{ 25 };
-    inline static int damage_range_weapon{ 15 };
     inline static bool enable_sneak_jump_limit{true};
     inline static float sneak_height_modifier{ 0.25 };
     inline static bool enable_carry_weight_debuffs{true};

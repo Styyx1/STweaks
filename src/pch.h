@@ -126,4 +126,11 @@ namespace logger = SKSE::log;
 namespace stl
 {
     using namespace SKSE::stl;
+
+    template <std::integral T, std::size_t N>
+    void safe_write(std::uintptr_t a_dst, const std::array<T, N>& a_data)
+    {
+        REL::safe_write(a_dst, a_data.data(), a_data.size() * sizeof(T));
+    }
+
 } // namespace stl

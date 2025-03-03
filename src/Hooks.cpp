@@ -7,14 +7,17 @@ namespace Hooks
 {
     void Install()
     {        
+        logger::info("--------------------------------");
+        logger::info("Installing hooks");
+
         AdjustActiveEffect::Install();
         CombatHit::Install();
         JumpHeight::Install();
-        OverEncumbered::Install();
         MainUpdate::InstallUpdate();
-        //ActorUpdateHook::InstallUpdateActor();
         DealtMeleeDamage::InstallMeleeDamageHook();
-        logger::debug("installed hooks");
+
+        logger::debug("installed all hooks");
+        logger::info("--------------------------------");
     }
     void CombatHit::Install()
     {
@@ -22,6 +25,7 @@ namespace Hooks
         auto& trampoline = SKSE::GetTrampoline();
         REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(37673, 38627), REL::VariantOffset(0x3c0, 0x4A8, 0x3c0) };
         _originalCall = trampoline.write_call<5>(target.address(), &CHit);
+        logger::info("Installed damage taken hook");
     }
     void CombatHit::RandomiseDamage(RE::Actor* a_this, RE::HitData* a_hitData)
     {
@@ -86,7 +90,7 @@ namespace Hooks
     {
         REL::Relocation<std::uintptr_t> PlayerVTBL{ RE::VTABLE_PlayerCharacter[0] };
         func = PlayerVTBL.write_vfunc(0xAD, PlayerUpdate);
-        logger::info("hook:Player Update");
+        logger::info("Installed player update hook");
     }
 
     // https://github.com/powerof3/MagicSneakAttacks/blob/275255b26492115557c7bfa3cb7c4a79e83f2f3d/src/Hooks.cpp#L29 
@@ -115,6 +119,7 @@ namespace Hooks
         auto& trampoline = SKSE::GetTrampoline();
         REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(33763, 34547), REL::Relocate(0x4A3, 0x656, 0x427)  }; // MagicTarget::CheckAddEffect
         func = trampoline.write_call<5>(target.address(), thunk);
+        logger::info("Installed active effect hook");
     }
 
     float JumpHeight::JumpHeightGetScale(RE::TESObjectREFR* refr)
@@ -136,69 +141,10 @@ namespace Hooks
     }
     void JumpHeight::Install()
     {
-        /*
-SE ID: 36271 SE Offset: 0x190 (Heuristic)
-AE ID: 37257 AE Offset: 0x17f
-        */
         auto& trampoline = SKSE::GetTrampoline();
         REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(36271, 37257), REL::Relocate(0x190, 0x17f, 0x190) };
         func = trampoline.write_call<5>(target.address(), JumpHeightGetScale);
         logger::info("Installed jump height hook");
-
-    }
-
-    bool OverEncumbered::IsOverEncumberedEX(RE::Actor* a_actor)
-    {
-        //auto test = func(a_actor);
-        //logger::info("test is {}", test ? "true" : "false");
-        logger::info("inside overencumbered hook");
-        return false;
-    }
-    void OverEncumbered::Install()
-    {        
-        /*
-SE ID: 21017 SE Offset: 0x2e (Heuristic)
-AE ID: 21467 AE Offset: 0x2e 
-
-SE ID: 27811 SE Offset: 0x66 (Heuristic)
-AE ID: 28536 AE Offset: 0x66
-
-        SE ID: 38610 SE Offset: 0xa1 (Heuristic)
-        AE ID: 39641 AE Offset: 0xa1
-
-        SE ID: 38615 SE Offset: 0x3b (Heuristic)
-        AE ID: 39646 AE Offset: 0x3b
-
-        SE ID: Not Found SE Offset: Not Found
-        AE ID: 40447 AE Offset: 0x1274
-
-SE ID: 38046 SE Offset: 0x24e (Heuristic)
-AE ID: 39002 AE Offset: 0x1f6
-
-SE ID: 39460 SE Offset: 0x58 (Heuristic)
-AE ID: 40537 AE Offset: 0x63
-
-SE ID: 39372 SE Offset: Not Found
-AE ID: 40444 AE Offset: 0x0 //fast travel bool
-
-        */
-        auto& trampoline = SKSE::GetTrampoline();
-        REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(27811, 40444), REL::Relocate(0x66, 0x0, 0x66)};
-        func = trampoline.write_call<5>(target.address(), IsOverEncumberedEX);
-        logger::info("Installed overencumbered hook");
-    }
-
-    void ActorUpdateHook::InstallUpdateActor()
-    {
-        REL::Relocation<std::uintptr_t> ActorVTABLE{ RE::VTABLE_Character[0] };
-
-        _ActorUpdate = ActorVTABLE.write_vfunc(0xAD, ActorUpdate);
-        logger::info("hook:NPC Update");
-    }
-
-    void ActorUpdateHook::ActorUpdate(RE::Character* a_this, float a_delta)
-    {
-        _ActorUpdate(a_this, a_delta);
     }
 
     void DealtMeleeDamage::InstallMeleeDamageHook()
@@ -206,9 +152,8 @@ AE ID: 40444 AE Offset: 0x0 //fast travel bool
         auto& trampoline = SKSE::GetTrampoline();
         REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(42832, 44001), REL::VariantOffset(0x1a5, 0x1a4, 0x1a5) };
         _MeleeDamageCall = trampoline.write_call<5>(target.address(), &MeleeDamage);
-        logger::info("hooked melee damage");
+        logger::info("Hooked melee damage");
     }
-
     float DealtMeleeDamage::MeleeDamage(void* _weap, RE::ActorValueOwner* a, float DamageMult, char isbow)
     {
         RE::PlayerCharacter* player = Cache::GetPlayerSingleton();
