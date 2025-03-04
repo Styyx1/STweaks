@@ -93,6 +93,7 @@ public:
             return false;
     }
 
+    // https://github.com/powerof3/PapyrusExtenderSSE/blob/640b79d554da4a5392a05107560685621825568e/include/Papyrus/Functions/ObjectReference.h#L662
     static std::vector<RE::Actor*> GetNearbyActors(RE::TESObjectREFR* a_ref, float a_radius, bool a_ignorePlayer)
     {
         {
@@ -157,6 +158,7 @@ public:
         }
     }
 
+    // https://github.com/colinswrath/BladeAndBlunt/blob/main/include/Conditions.h
     static bool HasSpell(RE::Actor* actor, RE::SpellItem* spell)
     {	
         using func_t = decltype(&Utility::HasSpell);
