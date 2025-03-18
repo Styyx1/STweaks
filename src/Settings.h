@@ -10,7 +10,7 @@ public:
     inline static bool enable_damage_ranges{true};
     inline static bool enable_sneak_jump_limit{true};
     inline static float sneak_height_modifier{ 0.25 };
-    inline static bool enable_carry_weight_debuffs{true};
+    //inline static bool enable_carry_weight_debuffs{true};
     inline static bool enable_mass_based_jump_height{ true };
     inline static bool enable_sneak_stamina{ true };
     inline static float jump_modifier_heavy{ 0.5 };

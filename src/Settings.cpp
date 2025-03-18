@@ -24,7 +24,7 @@ void Settings::LoadSettings() noexcept
     enable_mass_based_jump_height = ini.GetBoolValue("Toggles", "bMassBasedJump", true);
     enable_damage_ranges = ini.GetBoolValue("Toggles", "bEnableDamageRanges", true);
     enable_sneak_jump_limit = ini.GetBoolValue("Toggles", "bEnableSneakJumpLimit", true);
-    enable_carry_weight_debuffs = ini.GetBoolValue("Toggles", "bToggleCarryWeightDebuff", true);
+    //enable_carry_weight_debuffs = ini.GetBoolValue("Toggles", "bToggleCarryWeightDebuff", true);
     enable_sneak_stamina = ini.GetBoolValue("Toggles", "bEnableSneakStamina", true);
     enable_foll_change = ini.GetBoolValue("Toggles", "bEnableFollowerDamageChange", true);
 

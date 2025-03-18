@@ -185,9 +185,7 @@ namespace Hooks
                     logger::debug("\n final modifier is {} \n", modifier);
                 }
             }    
-        }
-            
+        }            
         return dam;
     }
-
 } // namespace Hooks
