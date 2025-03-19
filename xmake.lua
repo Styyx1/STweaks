@@ -22,6 +22,7 @@ add_rules("plugin.vsxmake.autoupdate")
 set_defaultmode("releasedbg")
 
 set_config("skse_xbyak", true)
+set_config("rex_ini", true)
 
 -- packages
 add_requires("simpleini", "xbyak")
