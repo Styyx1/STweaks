@@ -7,11 +7,15 @@
 #include <RE/Skyrim.h>
 #include <SKSE/SKSE.h>
 #include <REX/REX/INI.h>
-#include "SimpleIni.h"
+#include <CLIBUtil\utils.hpp>
+
+#include <source_location>
 
 using namespace std::literals;
 
 namespace logger = SKSE::log;
+
+using namespace clib_util;
 
 namespace stl
 {

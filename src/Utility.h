@@ -146,6 +146,26 @@ public:
         }
     }
 
+
+     static bool ActorHasActiveEffect(RE::Actor* a_actor, RE::EffectSetting* a_effect)
+    {
+        auto activeEffects = a_actor->AsMagicTarget()->GetActiveEffectList();
+        RE::EffectSetting* setting       = nullptr;
+        if (!activeEffects->empty()) {
+            for (RE::ActiveEffect* effect : *activeEffects) {
+                if (effect; !effect->flags.any(RE::ActiveEffect::Flag::kInactive)) {
+                    setting = effect ? effect->GetBaseObject() : nullptr;
+                    if (setting) {
+                        if (setting == a_effect) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } 
+        return false;
+    }
+
     // Credit: KernalsEgg for ApplySpell and IsPermanent
     // extensions
     static bool IsPermanent(RE::MagicItem *item)
@@ -188,10 +208,51 @@ public:
     }
     inline static REL::Relocation<decltype(HasSpell)> _HasSpell;
 
-    static bool IsMoving(RE::PlayerCharacter *player)
+    static bool IsMoving(RE::Actor *a_actor)
     {
-        auto playerState = player->AsActorState();
-        return (static_cast<bool>(playerState->actorState1.movingForward) || static_cast<bool>(playerState->actorState1.movingBack) || static_cast<bool>(playerState->actorState1.movingLeft) || static_cast<bool>(playerState->actorState1.movingRight));
+        auto actorState = a_actor->AsActorState();
+        return (static_cast<bool>(actorState->actorState1.movingForward) || static_cast<bool>(actorState->actorState1.movingBack) || static_cast<bool>(actorState->actorState1.movingLeft) || static_cast<bool>(actorState->actorState1.movingRight));
+    }
+
+    static bool IsAttacking(RE::Actor *actor)
+    {
+        using func_t = decltype(&IsAttacking);
+        REL::Relocation<func_t> func{Cache::IsAttackingAddress};
+        return func(actor);
+    }
+
+    inline static REL::Relocation<decltype(IsAttacking)> _IsAttacking;
+
+    static bool IsBlocking(RE::Actor *actor)
+    {
+        using func_t = decltype(&IsBlocking);
+        REL::Relocation<func_t> func{Cache::IsBlockingAddress};
+        return func(actor);
+    }
+    inline static REL::Relocation<decltype(IsBlocking)> _IsBlocking;
+
+    static bool GetMount(RE::Actor *a_actor, RE::ActorPtr *a_mountOut)
+    {
+        using func_t = decltype(&GetMount);
+        REL::Relocation<func_t> func{REL::RelocationID(37757, 38702)};
+        return func(a_actor, a_mountOut);
+    }
+
+    static inline bool IsPowerAttacking(RE::Actor *actor)
+    {
+        if (auto high = actor->GetHighProcess())
+        {
+            if (const auto attackData = high->attackData)
+            {
+                auto flags = attackData->data.flags;
+
+                if (flags && flags.any(RE::AttackData::AttackFlag::kPowerAttack))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     struct Actor

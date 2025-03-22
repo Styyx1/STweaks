@@ -3,6 +3,7 @@
 #include "Logging.h"
 #include "Settings.h"
 #include "cache.h"
+#include "inputhandler.h"
 
 void Listener(SKSE::MessagingInterface::Message *message) noexcept
 {
@@ -10,6 +11,7 @@ void Listener(SKSE::MessagingInterface::Message *message) noexcept
     {
         Hooks::Install();
         Settings::Forms::LoadForms();
+        Input::RegisterEvents();
     }
 }
 

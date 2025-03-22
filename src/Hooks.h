@@ -18,14 +18,19 @@ namespace Hooks
     class MainUpdate
     {
     public:
-        static void PlayerUpdate(RE::PlayerCharacter *p, float a_delta);
+        
 
         static void InstallUpdate();
-        static inline float frameCount = 0;
-        static inline bool can_debuff = true;
-        static inline std::uint32_t lightLevelCount;
+        static inline int frameCount = 0;
+        static void HandleSwimming(RE::Actor *a_actor);
+        static inline std::chrono::steady_clock::time_point sprintStartTime;
+        static inline bool isSprinting = false;
 
     private:
+        static void PlayerUpdate(RE::PlayerCharacter *p, float a_delta);
+        static bool HasRangedWeaponDrawn(RE::PlayerCharacter *player);
+        inline static void LaunchArrow(RE::Actor *a_actor, RE::TESAmmo *a_ammo, RE::TESObjectWEAP *a_weapon, RE::BSFixedString a_nodeName, std::int32_t a_source, RE::TESObjectREFR *a_target, RE::AlchemyItem *a_poison);
+        static void DoBullrush(RE::PlayerCharacter *a_player);
         inline static REL::Relocation<decltype(&PlayerUpdate)> func;
     };
 
@@ -58,6 +63,18 @@ namespace Hooks
     private:
         static float MeleeDamage(void *_weap, RE::ActorValueOwner *a, float DamageMult, char isbow);
         static inline REL::Relocation<decltype(&MeleeDamage)> _MeleeDamageCall;
+    };
+
+    class EffectEndHooks
+    {
+    public:
+        static void InstallEffectEndHooks();
+
+    private:
+        static void ValueModifierEffectEnd(RE::ValueModifierEffect *a_this);
+        static void DualValueModEffectEnd(RE::DualValueModifierEffect *a_this);
+        static inline REL::Relocation<decltype(&ValueModifierEffectEnd)> _valModEffEnd;
+        static inline REL::Relocation<decltype(&DualValueModEffectEnd)> _dualValModEffEnd;
     };
 
     static RE::ActorValue LookupActorValueByName(const char *av_name)

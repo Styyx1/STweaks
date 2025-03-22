@@ -46,8 +46,9 @@ target("stweaks")
     -- add src files
     add_files("src/**.cpp")
     add_headerfiles("src/**.h")
-    add_includedirs("src")
+    add_includedirs("src", "extern")
     set_pcxxheader("src/pch.h")
+    
 after_build(function(target)
     local copy = function(env, ext)
         for _, env in pairs(env:split(";")) do

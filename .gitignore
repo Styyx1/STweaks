@@ -6,6 +6,8 @@
 # folders
 build/
 vs*/
+notes/
+extern/**
 
 # files
 *.zip
