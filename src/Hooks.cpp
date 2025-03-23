@@ -32,11 +32,6 @@ namespace Hooks
             DealtMeleeDamage::InstallMeleeDamageHook();
         }
 
-        if (use_requiem_stamina.GetValue())
-        {
-            EffectEndHooks::InstallEffectEndHooks();
-        }
-
         logger::debug("installed all hooks");
         logger::info("--------------------------------");
     }
@@ -82,8 +77,6 @@ namespace Hooks
             {
                 if (Settings::Forms::sneak_stamina_spell)
                     player->RemoveSpell(Settings::Forms::sneak_stamina_spell);
-                if (Settings::Forms::stamina_swimm_player)
-                    player->RemoveSpell(Settings::Forms::stamina_swimm_player);
             }
             else
             {
@@ -108,86 +101,6 @@ namespace Hooks
                     }
 
                     break;
-                case 2:
-                    if (player->AsActorState()->IsSwimming())
-                    {
-                        if (!Utility::HasSpell(player, Settings::Forms::exhaustion_swim) && use_requiem_stamina.GetValue())
-                        {
-                            player->AddSpell(Settings::Forms::exhaustion_swim);
-                        }
-                        if (!Utility::HasSpell(player, Settings::Forms::stamina_swimm_player) && use_requiem_stamina.GetValue())
-                        {
-                            Utility::ApplySpell(player, player, Settings::Forms::stamina_swimm_player);
-                        }
-                    }
-                    else
-                    {
-                        if (Utility::HasSpell(player, Settings::Forms::exhaustion_swim))
-                        {
-                            player->RemoveSpell(Settings::Forms::exhaustion_swim);
-                        }
-                        if (Utility::HasSpell(player, Settings::Forms::stamina_swimm_player))
-                        {
-                            player->RemoveSpell(Settings::Forms::stamina_swimm_player);
-                        }
-                    }
-                    break;
-                case 3:
-                    if (Utility::IsAttacking(player) && !Utility::IsPowerAttacking(player))
-                    {
-                        if (!Utility::HasSpell(player, Settings::Forms::stamina_attack_player))
-                        {
-                            player->AddSpell(Settings::Forms::stamina_attack_player);
-                        }
-                    }
-                    else
-                    {
-                        if (Utility::HasSpell(player, Settings::Forms::stamina_attack_player))
-                        {
-                            player->RemoveSpell(Settings::Forms::stamina_attack_player);
-                        }
-
-                        if (Utility::IsBlocking(player))
-                        {
-                            if (!Utility::HasSpell(player, Settings::Forms::stamina_block_spell))
-                            {
-                                player->AddSpell(Settings::Forms::stamina_block_spell);
-                            }
-                        }
-                        else
-                        {
-                            if (Utility::HasSpell(player, Settings::Forms::stamina_block_spell))
-                            {
-                                player->RemoveSpell(Settings::Forms::stamina_block_spell);
-                            }
-                        }
-                    }
-                    break;
-                case 4:
-                    if (player->AsActorState()->IsSprinting())
-                    {
-                        if (!isSprinting)
-                        {
-                            // Player just started sprinting, record the time
-                            sprintStartTime = std::chrono::steady_clock::now();
-                            isSprinting = true;
-                        }
-
-                        // Check elapsed time
-                        auto now = std::chrono::steady_clock::now();
-                        double elapsedSeconds = std::chrono::duration<double>(now - sprintStartTime).count();
-
-                        if (elapsedSeconds >= 2.0)
-                        { // 2 seconds sprinting
-                            DoBullrush(player);
-                        }
-                    }
-                    else
-                    {
-                        // Reset when the player stops sprinting
-                        isSprinting = false;
-                    }
-                    break;
                 default:
                     break;
                 }
@@ -209,130 +122,11 @@ namespace Hooks
         logger::debug("check for ranged weapon, it is {}", result ? "true" : "false");
         return result;
     }
-    inline void MainUpdate::LaunchArrow(RE::Actor *a_actor, RE::TESAmmo *a_ammo, RE::TESObjectWEAP *a_weapon, RE::BSFixedString a_nodeName, std::int32_t a_source, RE::TESObjectREFR *a_target, RE::AlchemyItem *a_poison)
-    {
-
-        SKSE::GetTaskInterface()->AddTask([a_actor, a_ammo, a_weapon, a_nodeName, a_source, a_target, a_poison]()
-                                          {
-			RE::NiAVObject* fireNode = nullptr;
-			auto            root = a_actor->GetCurrent3D();
-			switch (a_source) {
-			case -1:
-				{
-					if (!a_nodeName.empty()) {
-						if (root) {
-							fireNode = root->GetObjectByName(a_nodeName);
-						}
-					} else {
-						if (const auto currentProcess = a_actor->GetActorRuntimeData().currentProcess) {
-							const auto& biped = a_actor->GetCurrentBiped();
-							fireNode = a_weapon->IsCrossbow() ? currentProcess->GetMagicNode(biped) : currentProcess->GetWeaponNode(biped);
-						} else {
-							fireNode = a_weapon->GetFireNode(root);
-						}
-					}
-				}
-				break;
-			case 0:
-				fireNode = root ? root->GetObjectByName(RE::FixedStrings::GetSingleton()->npcLMagicNode) : nullptr;
-				break;
-			case 1:
-				fireNode = root ? root->GetObjectByName(RE::FixedStrings::GetSingleton()->npcRMagicNode) : nullptr;
-				break;
-			case 2:
-				fireNode = root ? root->GetObjectByName(RE::FixedStrings::GetSingleton()->npcHeadMagicNode) : nullptr;
-				break;
-			default:
-				break;
-			}
-			RE::NiPoint3                  origin;
-			RE::Projectile::ProjectileRot angles{};
-			if (fireNode) {
-				if (a_actor->IsPlayerRef()) {
-					angles.z = a_actor->GetHeading(false);
-
-					float tiltUpAngle;
-					if (a_ammo->IsBolt()) {
-						tiltUpAngle = RE::INISettingCollection::GetSingleton()->GetSetting("f1PBoltTiltUpAngle:Combat")->GetFloat();
-					} else {
-						tiltUpAngle = RE::INISettingCollection::GetSingleton()->GetSetting(RE::PlayerCamera::GetSingleton()->IsInFirstPerson() ? "f1PArrowTiltUpAngle:Combat" : "f3PArrowTiltUpAngle:Combat")->GetFloat();
-					}
-					angles.x = a_actor->GetAngleX() - (RE::deg_to_rad(tiltUpAngle));
-
-					origin = fireNode->world.translate;
-					a_actor->Unk_117(origin);
-				} else {
-					origin = fireNode->world.translate;
-					a_actor->Unk_A0(fireNode, angles.x, angles.z, origin);
-				}
-			} else {
-				origin = a_actor->GetPosition();
-				origin.z += 96.0f;
-
-				angles.x = a_actor->GetAimAngle();
-				angles.z = a_actor->GetAimHeading();
-			}
-			RE::ProjectileHandle       handle{};
-			RE::Projectile::LaunchData launchData(a_actor, origin, angles, a_ammo, a_weapon);
-
-			launchData.desiredTarget = a_target;
-			launchData.poison = a_poison;
-			launchData.enchantItem = a_weapon->formEnchanting;
-
-			RE::Projectile::Launch(&handle, launchData);
-
-			RE::BGSSoundDescriptorForm* sound = nullptr;
-			std::uint32_t               flags = 0;
-			if (a_actor->IsPlayerRef() && a_weapon->attackSound2D) {
-				sound = a_weapon->attackSound2D;
-				flags = 18;
-			} else {
-				sound = a_weapon->attackSound;
-				flags = 16;
-			}
-			if (sound) {
-				RE::BSSoundHandle soundHandle;
-				RE::BSAudioManager::GetSingleton()->BuildSoundDataFromDescriptor(soundHandle, sound, flags);
-				soundHandle.SetPosition(origin);
-				soundHandle.Play();
-			} });
-    }
-    void MainUpdate::DoBullrush(RE::PlayerCharacter *a_player)
-    {
-        if (a_player->IsOnMount())
-        {
-            RE::ActorPtr mount = nullptr;
-            Utility::GetMount(a_player, &mount);
-            if (mount)
-            {
-                Utility::ApplySpell(a_player, mount.get(), Settings::Forms::bullrush_horse_spell);
-            }
-        }
-        else
-        {
-            Utility::ApplySpell(a_player, a_player, Settings::Forms::bullrush_player_spell);
-        }
-    }
     void MainUpdate::InstallUpdate()
     {
         REL::Relocation<std::uintptr_t> PlayerVTBL{RE::VTABLE_PlayerCharacter[0]};
         func = PlayerVTBL.write_vfunc(0xAD, PlayerUpdate);
         logger::info("Installed player update hook");
-    }
-
-    void MainUpdate::HandleSwimming(RE::Actor *a_actor)
-    {
-        if (a_actor->AsActorState()->IsSwimming())
-        {
-            if (!Utility::HasSpell(a_actor, Settings::Forms::stamina_swimm_player) && use_requiem_stamina.GetValue())
-            {
-                a_actor->AddSpell(Settings::Forms::stamina_swimm_player);
-            }
-        }
-        else if (Utility::HasSpell(a_actor, Settings::Forms::stamina_swimm_player))
-        {
-            a_actor->RemoveSpell(Settings::Forms::stamina_swimm_player);
-        }
     }
 
     // https://github.com/powerof3/MagicSneakAttacks/blob/275255b26492115557c7bfa3cb7c4a79e83f2f3d/src/Hooks.cpp#L29
@@ -377,11 +171,6 @@ namespace Hooks
             return scale;
         }
         float mass = actor->AsActorValueOwner()->GetActorValue(RE::ActorValue::kMass);
-
-        if (use_requiem_stamina.GetValue())
-        {
-            Utility::ApplySpell(actor, actor, Settings::Forms::stamina_spell_jump);
-        }
 
         if (actor->IsSneaking())
         {
@@ -443,28 +232,4 @@ namespace Hooks
         }
         return dam;
     }
-    void EffectEndHooks::InstallEffectEndHooks()
-    {
-        _valModEffEnd = REL::Relocation<uintptr_t>{RE::ValueModifierEffect::VTABLE[0]}.write_vfunc(21, ValueModifierEffectEnd);
-        _dualValModEffEnd = REL::Relocation<uintptr_t>{RE::DualValueModifierEffect::VTABLE[0]}.write_vfunc(21, DualValueModEffectEnd);
-
-        logger::info("Installed <{}>", typeid(EffectEndHooks).name());
-    }
-    void EffectEndHooks::ValueModifierEffectEnd(RE::ValueModifierEffect *a_this)
-    {
-        _valModEffEnd(a_this);
-    }
-    void EffectEndHooks::DualValueModEffectEnd(RE::DualValueModifierEffect *a_this)
-    {
-        _dualValModEffEnd(a_this);
-        if (a_this->spell == Settings::Forms::exhaustion_swim)
-        {
-            logger::debug("swim exhaustion ended, start stamina drain spell");
-            auto actor = skyrim_cast<RE::Actor *>(a_this->target);
-            if (actor)
-            {
-                Utility::ApplySpell(actor, actor, Settings::Forms::stamina_swimm_player);
-            }
-        }
-    }
-} // namespace Hooks
+}

@@ -10,7 +10,6 @@ namespace Settings
         static REX::INI::Bool enable_mass_based_jump_height{"Toggles", "bMassBasedJump", true};
         static REX::INI::Bool enable_sneak_stamina{"Toggles", "bEnableSneakStamina", true};
         static REX::INI::Bool enable_foll_change{"Toggles", "bEnableFollowerDamageChange", true};
-        static REX::INI::Bool use_requiem_stamina{"Toggles", "bUseRequiem", true};
 
         static REX::INI::F32 sneak_height_modifier{"SettingValues", "fSneakJumpModifier", 0.25f};
         static REX::INI::I32 weapon_upper_range{"SettingValues", "iUpperRangeWeapons", 15};
@@ -47,7 +46,6 @@ namespace Settings
             logger::debug("magic lower range is {}", magic_lower_range.GetValue());
 
             LogBool("sneak stamina", Settings::Values::enable_sneak_stamina.GetValue());
-            LogBool("use Requiem", use_requiem_stamina.GetValue());
         }
     }
     struct Forms
@@ -59,53 +57,10 @@ namespace Settings
             // Stweaks specific forms
             const int sneak_stamina_spell_ID = 0x804;
             const char *the_mod = "STweaks.esp";
-            // Requiem specific forms
-            const int stamina_spell_attack_ID = 0x6AA964;
-            const int stamina_spell_jump_ID = 0x6AA967;
-            const int stamina_spell_swim_playerID = 0xADDDCB;
-            const int exhaustion_swimID = 0xADDDCC;
-            const int stamina_block_spell_ID = 0x2C6F32;
-            const int bullrush_player_ID = 0x766B8B;
-            const int bullrush_horse_ID = 0x77D000;
-            const int dodge_spell_cost_ID = 0x6AA965;
-
-            const int dodge_perk_effect_ID = 0x6C3574;
-
-            //-----------------------------------------//
-
-            const int stamina_spell_attack_npcID = 0x0;
-            const int stamina_spell_jump_npcID = 0x0;
-            const int stamina_spell_walk_playerID = 0x0;
-            const int stamina_spell_sprint_playerID = 0x0;
-
-            const char *requiem = "Requiem.esp";
 
             auto dh = RE::TESDataHandler::GetSingleton();
 
             sneak_stamina_spell = dh->LookupForm<RE::SpellItem>(sneak_stamina_spell_ID, the_mod);
-
-            if (Settings::Values::use_requiem_stamina.GetValue())
-            {
-                /*
-                stamina_jump_player = dh->LookupForm<RE::SpellItem>(stamina_spell_jump_playerID, requiem);
-                stamina_walk_player = dh->LookupForm<RE::SpellItem>(stamina_spell_walk_playerID, requiem);
-                stamina_sprint_player = dh->LookupForm<RE::SpellItem>(stamina_spell_sprint_playerID, requiem);
-                stamina_attack_npc = dh->LookupForm<RE::SpellItem>(stamina_spell_attack_npcID, requiem);
-                stamina_jump_npc = dh->LookupForm<RE::SpellItem>(stamina_spell_jump_npcID, requiem); */
-
-                stamina_attack_player = dh->LookupForm<RE::SpellItem>(stamina_spell_attack_ID, requiem);
-                stamina_swimm_player = dh->LookupForm<RE::SpellItem>(stamina_spell_swim_playerID, requiem);
-                exhaustion_swim = dh->LookupForm<RE::SpellItem>(exhaustion_swimID, requiem);
-                stamina_spell_jump = dh->LookupForm<RE::SpellItem>(stamina_spell_jump_ID, requiem);
-                stamina_block_spell = dh->LookupForm<RE::SpellItem>(stamina_block_spell_ID, requiem);
-                bullrush_player_spell = dh->LookupForm<RE::SpellItem>(bullrush_player_ID, requiem);
-                bullrush_horse_spell = dh->LookupForm<RE::SpellItem>(bullrush_horse_ID, requiem);
-                dodge_cost_spell = dh->LookupForm<RE::SpellItem>(dodge_spell_cost_ID, requiem);
-                dodge_perk_effect = dh->LookupForm<RE::EffectSetting>(dodge_perk_effect_ID, requiem);
-
-                LogForm("swim_stamina_player", stamina_swimm_player);
-                LogForm("swim exhaustion", exhaustion_swim);
-            }
 
             logger::info("Loaded Forms");
         }
@@ -126,22 +81,6 @@ namespace Settings
                 return result = (100.00f - a_input) / 100.00f;
         }
 
-        static inline RE::SpellItem *stamina_spell_jump{nullptr};
         static inline RE::SpellItem *sneak_stamina_spell{nullptr};
-        static inline RE::SpellItem *stamina_attack_player{nullptr};
-        static inline RE::SpellItem *stamina_swimm_player{nullptr};
-        static inline RE::SpellItem *exhaustion_swim{nullptr};
-        static inline RE::SpellItem *stamina_block_spell{nullptr};
-        static inline RE::SpellItem *bullrush_horse_spell{nullptr};
-        static inline RE::SpellItem *bullrush_player_spell{nullptr};
-        static inline RE::SpellItem *dodge_cost_spell{nullptr};
-
-        static inline RE::EffectSetting *dodge_perk_effect{nullptr};
-
-        static inline RE::SpellItem *stamina_jump_player{nullptr};
-        static inline RE::SpellItem *stamina_walk_player{nullptr};
-        static inline RE::SpellItem *stamina_sprint_player{nullptr};
-        static inline RE::SpellItem *stamina_attack_npc{nullptr};
-        static inline RE::SpellItem *stamina_jump_npc{nullptr};
     };
 }

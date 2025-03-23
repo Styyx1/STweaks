@@ -11,7 +11,7 @@ void Listener(SKSE::MessagingInterface::Message *message) noexcept
     {
         Hooks::Install();
         Settings::Forms::LoadForms();
-        Input::RegisterEvents();
+        // Input::RegisterEvents();
     }
 }
 
