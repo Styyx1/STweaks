@@ -75,6 +75,7 @@ namespace Settings
         constexpr const char* cure_keyword = "cleanse_curse";
         constexpr const char* curse_keyword = "stweaks_curse";
         constexpr const char* silence_key = "curse_silence";
+        constexpr const char* bow_curse_key = "curse_bow";
     }
 
     struct Forms

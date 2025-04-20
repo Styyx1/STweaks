@@ -40,6 +40,7 @@ namespace Hooks
         if (enable_diseases.GetValue()) {
             PreventCast::Install();
             PlayerPotionUsed::Install();
+            HighGravityArrows::Install();
         }
 
         LightLevel::Install();
@@ -49,6 +50,8 @@ namespace Hooks
         logger::debug("installed all hooks");
         logger::info("--------------------------------");
     }
+
+    bool wasEnraged = false;
            
 
 
@@ -117,6 +120,23 @@ namespace Hooks
                         player->RemoveSpell(Settings::Forms::sneak_stamina_spell);
                     }
 
+                    break;
+                case 2:
+                    if (Utility::ActiveEffectHasNewDiseaseKeyword(player, "curse_frenzy") && player->IsInCombat()) {
+                        player->SetAIDriven(true);
+                        player->DrawWeaponMagicHands(true);
+                        player->GetActorRuntimeData().boolFlags.set(RE::Actor::BOOL_FLAGS::kAttackOnSight);
+                        player->MoveToHigh();
+                        player->UpdateCombat();
+                        wasEnraged = true;
+                    }
+                    else {
+                        if (wasEnraged) {
+                            player->SetAIDriven(false);
+                            player->GetActorRuntimeData().boolFlags.reset();
+                            wasEnraged = false;
+                        }                        
+                    }
                     break;
                 default:
                     break;
@@ -460,4 +480,20 @@ namespace Hooks
         return _PlayerUsePotion(self, alch, extralist);
     }
 
+    void HighGravityArrows::Install() {
+        REL::Relocation<std::uintptr_t> projVTABLE{RE::VTABLE_ArrowProjectile[0]};
+        func = projVTABLE.write_vfunc(0xB5, GetGravityArrow);
+        logger::info("Installed arrow gravity hook");
+    }
+
+    float HighGravityArrows::GetGravityArrow(RE::Projectile* a_this)
+    {
+        auto shooterRef = a_this->GetProjectileRuntimeData().shooter.get().get();
+        auto actorShooter = shooterRef ? shooterRef->As<RE::Actor>() : nullptr;
+
+        if (Utility::ActiveEffectHasNewDiseaseKeyword(actorShooter, Settings::Constants::bow_curse_key)) {
+            return func(a_this) * 10.0f;
+        }
+        return func(a_this);
+    }
 }

@@ -122,6 +122,14 @@ namespace Hooks
         static inline REL::Relocation<decltype(&PlayerUsePotion)> _PlayerUsePotion;
     };
 
+    class HighGravityArrows {
+    public:
+        static void Install();
+    private:
+        static float GetGravityArrow(RE::Projectile* a_this);
+        static inline REL::Relocation<decltype(&GetGravityArrow)> func;
+    };
+
 
     static RE::ActorValue LookupActorValueByName(const char *av_name)
     {
