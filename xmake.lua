@@ -57,6 +57,8 @@ after_build(function(target)
                 os.mkdir(plugins)
                 os.trycp(target:targetfile(), plugins)
                 os.trycp(target:symbolfile(), plugins)
+                -- Copy .ini files or other extras
+                os.trycp("$(projectdir)/contrib/**.ini", plugins)
             end
         end
     end
@@ -64,5 +66,5 @@ after_build(function(target)
         copy(os.getenv("XSE_TES5_MODS_PATH"), target:name())
     elseif os.getenv("XSE_TES5_GAME_PATH") then
         copy(os.getenv("XSE_TES5_GAME_PATH"), "Data")
-    end
+    end    
 end)

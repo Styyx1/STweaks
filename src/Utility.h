@@ -3,6 +3,21 @@
 class Utility
 {
 public:
+
+    enum class GameDifficulty : std::int32_t {
+        Novice = 0,
+        Apprentice = 1,
+        Adept = 2,
+        Expert = 3,
+        Master = 4,
+        Legendary = 5
+    };
+
+    static RE::Setting* get_gmst(const char* a_setting)
+    {
+        return RE::GameSettingCollection::GetSingleton()->GetSetting(a_setting);
+    }
+
     static void AddItem(RE::Actor *a, RE::TESBoundObject *item, RE::ExtraDataList *extraList, int count, RE::TESObjectREFR *fromRefr)
     {
         using func_t = decltype(AddItem);
@@ -146,23 +161,89 @@ public:
         }
     }
 
-
-     static bool ActorHasActiveEffect(RE::Actor* a_actor, RE::EffectSetting* a_effect)
+    static bool ActorHasActiveEffect(RE::Actor *a_actor, RE::EffectSetting *a_effect)
     {
         auto activeEffects = a_actor->AsMagicTarget()->GetActiveEffectList();
-        RE::EffectSetting* setting       = nullptr;
-        if (!activeEffects->empty()) {
-            for (RE::ActiveEffect* effect : *activeEffects) {
-                if (effect; !effect->flags.any(RE::ActiveEffect::Flag::kInactive)) {
+        RE::EffectSetting *setting = nullptr;
+        if (!activeEffects->empty())
+        {
+            for (RE::ActiveEffect *effect : *activeEffects)
+            {
+                if (effect; !effect->flags.any(RE::ActiveEffect::Flag::kInactive))
+                {
                     setting = effect ? effect->GetBaseObject() : nullptr;
-                    if (setting) {
-                        if (setting == a_effect) {
+                    if (setting)
+                    {
+                        if (setting == a_effect)
+                        {
                             return true;
                         }
                     }
                 }
             }
-        } 
+        }
+        return false;
+    }
+
+    static bool ActiveEffectHasNewDiseaseKeyword(RE::Actor *a_actor, std::string a_keyword)
+    {
+        auto activeEffects = a_actor->AsMagicTarget()->GetActiveEffectList();
+        RE::EffectSetting *setting = nullptr;
+        if (!activeEffects->empty())
+        {
+            for (RE::ActiveEffect *effect : *activeEffects)
+            {
+                if (effect; !effect->flags.any(RE::ActiveEffect::Flag::kInactive))
+                {
+                    setting = effect ? effect->GetBaseObject() : nullptr;
+                    if (setting)
+                    {
+                        if (setting->HasKeywordString(a_keyword))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    inline static bool IsQuestItem(const RE::TESObjectREFR* a_ref)
+    {
+        if (const auto xAliases = a_ref->extraList.GetByType<RE::ExtraAliasInstanceArray>(); xAliases) {
+            RE::BSReadLockGuard locker(xAliases->lock);
+
+            return std::ranges::any_of(xAliases->aliases, [](const auto& aliasData) {
+                const auto alias = aliasData ? aliasData->alias : nullptr;
+                return alias && alias->IsQuestObject();
+                });
+        }
+
+        return a_ref->HasQuestObject();
+    }
+
+    static bool ActorHasEffectWithArchetype(RE::Actor *a_actor, RE::EffectArchetype a_archetype)
+    {
+        auto activeEffects = a_actor->AsMagicTarget()->GetActiveEffectList();
+        RE::EffectSetting *setting = nullptr;
+        if (!activeEffects->empty())
+        {
+            for (RE::ActiveEffect *effect : *activeEffects)
+            {
+                if (effect; !effect->flags.any(RE::ActiveEffect::Flag::kInactive))
+                {
+                    setting = effect ? effect->GetBaseObject() : nullptr;
+                    if (setting)
+                    {
+                        if (setting->GetArchetype() == a_archetype)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
         return false;
     }
 
@@ -254,6 +335,99 @@ public:
         }
         return false;
     }
+
+    static RE::SpellItem* GetRandomSpell(const std::vector<RE::SpellItem*>& spells)
+    {
+        if (spells.empty()) {
+            return nullptr;
+        }
+
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_int_distribution<std::size_t> dist(0, spells.size() - 1);
+
+        return spells[dist(gen)];
+    }
+
+    static bool ShouldApplyCurse(float chancePercent)
+    {
+        if (chancePercent <= 0.0f)
+            return false;
+        if (chancePercent >= 100.0f)
+            return true;
+
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> dist(0.0f, 100.0f);
+
+        return dist(gen) < chancePercent;
+    }
+
+	static void ApplyRandomCurse(RE::Actor* a_actor, const std::vector<RE::SpellItem*>& curses)
+    {
+        logger::debug("curse vector size is: {}", curses.size());
+        if (!a_actor || curses.empty())
+            return;
+
+        for (auto curse : curses) {
+            if (curse && a_actor->HasSpell(curse)) {
+                logger::debug("{} already has a curse: {}", a_actor->GetName(), curse->GetName());
+                return; // Already cursed
+            }
+        }
+
+        RE::SpellItem* curse_to_add = GetRandomSpell(curses);
+        if (curse_to_add) {
+            ApplySpell(a_actor, a_actor, curse_to_add);
+            Curses::active_curses[a_actor] = curse_to_add;
+            logger::info("Applied curse {} to {}", curse_to_add->GetName(), a_actor->GetName());
+        } else {
+            logger::warn("Failed to apply curse: selected spell was null");
+        }
+        
+    }
+
+    struct Curses
+    {
+        static inline std::unordered_map<RE::Actor*, RE::SpellItem*> active_curses;;
+
+        static void CleanseCurse(RE::Actor* a_actor)
+        {
+            auto it = active_curses.find(a_actor);
+            if (it != active_curses.end() && it->second) {
+                a_actor->RemoveSpell(it->second);
+                active_curses.erase(it);
+                logger::info("{}'s curse has been cleansed", a_actor->GetName());
+            }
+        }
+
+        inline static void PopulateActiveCursesAfterLoad(RE::Actor* a_actor)
+        {
+            class Visitor : public RE::Actor::ForEachSpellVisitor
+            {
+            public:
+                RE::BSContainer::ForEachResult Visit(RE::SpellItem* a_spell) override
+                {
+                    for (auto& curse : Settings::Forms::curse_list) {
+                        if (a_spell == curse) {
+                            foundCurse = curse;
+                            return RE::BSContainer::ForEachResult::kStop; // found one, done
+                        }
+                    }
+                    return RE::BSContainer::ForEachResult::kContinue;
+                }
+
+                RE::SpellItem* foundCurse{ nullptr };
+            } visitor;
+
+            a_actor->VisitSpells(visitor);
+
+            if (visitor.foundCurse) {
+                active_curses[a_actor] = visitor.foundCurse;
+                logger::debug("Restored active curse {} on {}", visitor.foundCurse->GetName(), a_actor->GetName());
+            }
+        }
+    };
 
     struct Actor
     {

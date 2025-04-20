@@ -4,23 +4,36 @@ namespace Settings
 {
     namespace Values
     {
-        static REX::INI::Bool debug_logging{"DebugLogging", "bDebugLoggingEnable", false};
-        static REX::INI::Bool enable_damage_ranges{"Toggles", "bEnableDamageRanges", true};
-        static REX::INI::Bool enable_sneak_jump_limit{"Toggles", "bEnableSneakJumpLimit", true};
-        static REX::INI::Bool enable_mass_based_jump_height{"Toggles", "bMassBasedJump", true};
-        static REX::INI::Bool enable_sneak_stamina{"Toggles", "bEnableSneakStamina", true};
-        static REX::INI::Bool enable_foll_change{"Toggles", "bEnableFollowerDamageChange", true};
+        static REX::INI::Bool debug_logging{ "DebugLogging", "bDebugLoggingEnable", false };
+        static REX::INI::Bool enable_damage_ranges{ "Toggles", "bEnableDamageRanges", true };
+        static REX::INI::Bool enable_sneak_jump_limit{ "Toggles", "bEnableSneakJumpLimit", true };
+        static REX::INI::Bool enable_mass_based_jump_height{ "Toggles", "bMassBasedJump", true };
+        static REX::INI::Bool enable_sneak_stamina{ "Toggles", "bEnableSneakStamina", true };
+        static REX::INI::Bool enable_foll_change{ "Toggles", "bEnableFollowerDamageChange", true };
+        static REX::INI::Bool enable_etheral_change{ "Toggles", "bEnableEtherealChange", true };
+        static REX::INI::Bool enable_normal_sneak_attack{ "Toggles", "bEnableNormalSneakAttack", true };
+        static REX::INI::Bool enable_diseases{ "Toggles", "bEnableDiseases", true };
+        static REX::INI::Bool enable_fading_actors{ "Toggles", "bEnableFadingActors", true };
 
-        static REX::INI::F32 sneak_height_modifier{"SettingValues", "fSneakJumpModifier", 0.25f};
-        static REX::INI::I32 weapon_upper_range{"SettingValues", "iUpperRangeWeapons", 15};
-        static REX::INI::I32 weapon_lower_range{"SettingValues", "iLowerRangeWeapons", 15};
-        static REX::INI::I32 magic_upper_range{"SettingValues", "iUpperRangeMagic", 15};
-        static REX::INI::I32 magic_lower_range{"SettingValues", "iLowerRangeMagic", 15};
+        static REX::INI::F32 sneak_height_modifier{ "SettingValues", "fSneakJumpModifier", 0.25f };
+        static REX::INI::I32 weapon_upper_range{ "SettingValues", "iUpperRangeWeapons", 15 };
+        static REX::INI::I32 weapon_lower_range{ "SettingValues", "iLowerRangeWeapons", 15 };
+        static REX::INI::I32 magic_upper_range{ "SettingValues", "iUpperRangeMagic", 15 };
+        static REX::INI::I32 magic_lower_range{ "SettingValues", "iLowerRangeMagic", 15 };
+        static REX::INI::F32 curse_chance{ "SettingValues", "fCurseChance", 1.0f };
 
-        static void LogBool(const char *a_boolName, bool a_setting)
+        static void LogBool(const char* a_boolName, bool a_setting)
         {
             logger::debug("bool {} is {}", a_boolName, a_setting ? "true" : "false");
         }
+
+        static inline std::vector<std::string> diseases{
+            "stweaksDisease_Health",
+            "stweaksDisease_Stamina",
+            "stweaksDisease_Magicka"
+        };
+
+
 
         inline static void Update()
         {
@@ -48,26 +61,75 @@ namespace Settings
             LogBool("sneak stamina", Settings::Values::enable_sneak_stamina.GetValue());
         }
     }
+
+    namespace Constants {
+        constexpr const char* mod_name = "STweaks.esp";
+        constexpr const char* diseases_name = "Stweaks - Diseases.esp";
+        const int sneak_stamina_spell_ID = 0x804;
+        const int health_curse_ID = 0x3;
+        const int stamina_curse_ID = 0x6;
+        const int magicka_curse_ID = 0x9;
+        const int silence_curse_ID = 0xD;
+        const int melee_weakness_curse_ID = 0x10;
+        const int bow_weakness_curse_ID = 0x13;
+        constexpr const char* cure_keyword = "cleanse_curse";
+        constexpr const char* curse_keyword = "stweaks_curse";
+        constexpr const char* silence_key = "curse_silence";
+    }
+
     struct Forms
     {
+        static inline bool disease_mod_active = false;
+
         static void LoadForms() noexcept
         {
             logger::info("Loading Forms");
 
             // Stweaks specific forms
             const int sneak_stamina_spell_ID = 0x804;
-            const char *the_mod = "STweaks.esp";
+            const char* the_mod = "STweaks.esp";
 
             auto dh = RE::TESDataHandler::GetSingleton();
 
-            sneak_stamina_spell = dh->LookupForm<RE::SpellItem>(sneak_stamina_spell_ID, the_mod);
+            sneak_stamina_spell = dh->LookupForm<RE::SpellItem>(Constants::sneak_stamina_spell_ID, Constants::mod_name);
+            if (auto file = dh->LookupModByName(Constants::diseases_name); file && file->compileIndex != 0xFF){
+                health_curse = dh->LookupForm<RE::SpellItem>(Constants::health_curse_ID, Constants::diseases_name);
+                stamina_curse = dh->LookupForm<RE::SpellItem>(Constants::stamina_curse_ID, Constants::diseases_name);
+                magicka_curse = dh->LookupForm<RE::SpellItem>(Constants::magicka_curse_ID, Constants::diseases_name);
+                silence_curse = dh->LookupForm<RE::SpellItem>(Constants::silence_curse_ID, Constants::diseases_name);
+                melee_damage_curse = dh->LookupForm<RE::SpellItem>(Constants::melee_weakness_curse_ID, Constants::diseases_name);
+                bow_damage_curse = dh->LookupForm<RE::SpellItem>(Constants::bow_weakness_curse_ID, Constants::diseases_name);
+
+                curse_list = {
+                    health_curse, stamina_curse, magicka_curse, silence_curse, melee_damage_curse, bow_damage_curse
+                };
+
+                disease_mod_active = true;
+            }
+			
+
+            LogAllFormsLoaded();
 
             logger::info("Loaded Forms");
         }
 
+       
+
         static void LogForm(std::string a_name, RE::TESForm *a_form)
         {
             logger::debug("{} is {}", a_name, a_form->GetName());
+        }
+
+        static void LogAllFormsLoaded() {
+			LogForm("Sneak Stamina Spell", sneak_stamina_spell);
+            if (disease_mod_active) {
+                LogForm("Health Curse", health_curse);
+                LogForm("Stamina Curse", stamina_curse);
+                LogForm("Magicka Curse", magicka_curse);
+                LogForm("Silence Curse", silence_curse);
+                LogForm("Melee Weakness Curse", melee_damage_curse);
+                LogForm("Bow Weakness Curse", bow_damage_curse);
+            }			
         }
 
         static float CalcPerc(int a_input, bool a_high)
@@ -82,5 +144,14 @@ namespace Settings
         }
 
         static inline RE::SpellItem *sneak_stamina_spell{nullptr};
+		static inline RE::SpellItem* health_curse{ nullptr };
+		static inline RE::SpellItem* stamina_curse{ nullptr };
+		static inline RE::SpellItem* magicka_curse{ nullptr };
+        static inline RE::SpellItem* silence_curse{ nullptr };
+        static inline RE::SpellItem* melee_damage_curse{ nullptr };
+        static inline RE::SpellItem* bow_damage_curse{ nullptr };
+
+        static inline std::vector<RE::SpellItem*> curse_list{};
+
     };
 }

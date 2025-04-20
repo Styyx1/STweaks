@@ -3,7 +3,7 @@
 #include "Logging.h"
 #include "Settings.h"
 #include "cache.h"
-#include "inputhandler.h"
+#include "serialisation.h"
 
 void Listener(SKSE::MessagingInterface::Message *message) noexcept
 {
@@ -11,7 +11,10 @@ void Listener(SKSE::MessagingInterface::Message *message) noexcept
     {
         Hooks::Install();
         Settings::Forms::LoadForms();
-        // Input::RegisterEvents();
+        Events::RegisterEvents();
+    }
+    if (message->type == SKSE::MessagingInterface::kPostLoadGame) {
+        Utility::Curses::PopulateActiveCursesAfterLoad(Cache::GetPlayerSingleton());
     }
 }
 
@@ -30,6 +33,14 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse)
 
     SKSE::AllocTrampoline(1 << 10);
     Cache::CacheAddLibAddresses();
+
+    if (auto serialization = SKSE::GetSerializationInterface())
+    {
+        serialization->SetUniqueID(Serialisation::ID);
+        serialization->SetSaveCallback(&Serialisation::SaveCallback);
+        serialization->SetLoadCallback(&Serialisation::LoadCallback);
+        serialization->SetRevertCallback(&Serialisation::RevertCallback);
+    }
 
     if (const auto messaging{SKSE::GetMessagingInterface()}; !messaging->RegisterListener(Listener))
     {

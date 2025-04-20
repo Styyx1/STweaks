@@ -1,4 +1,5 @@
 #pragma once
+#include "Events.h"
 
 namespace Hooks
 {
@@ -56,12 +57,73 @@ namespace Hooks
         static void InstallMeleeDamageHook();
 
     private:
-        static float MeleeDamage(void *_weap, RE::ActorValueOwner *a, float DamageMult, char isbow);
+        static float MeleeDamage(RE::TESObjectWEAP *_weap, RE::ActorValueOwner *a, float DamageMult, char isbow);
         static inline REL::Relocation<decltype(&MeleeDamage)> _MeleeDamageCall;
     };
 
-    static RE::ActorValue
-    LookupActorValueByName(const char *av_name)
+    class OnEffectEndHook
+    {
+    public:
+        static void Install();
+
+    private:
+        static void OnEffectEnd(RE::ScriptEffect *a_this);
+        static inline REL::Relocation<decltype(&OnEffectEnd)> _effectEnd;
+    };
+
+    class NPCFade
+    {
+    public:
+        static void Install();
+        static Utility::GameDifficulty g_cachedDifficulty;
+
+    private:
+        static void ActorUpdate(RE::Character *a_actor, float a_delta);
+        static inline REL::Relocation<decltype(ActorUpdate)> func;
+    };
+
+    class LightLevel
+    {
+    public:
+        static void Install();
+
+    private:
+        static float GetLightLevelF(long a_this);
+        static inline REL::Relocation<decltype(&GetLightLevelF)> func;
+    };
+
+    class ActiveEffectHook
+    {
+    public:
+        static void InstallHook();
+
+    private:
+        static void OnAddActiveEffect(RE::MagicTarget* a_this, RE::ActiveEffect* a_effect);
+        static inline REL::Relocation<decltype(&OnAddActiveEffect)> func;
+    };
+
+    class PreventCast
+    {
+    public: 
+        static void Install();
+    private: 
+        static bool CheckCast(RE::ActorMagicCaster *a_this, RE::MagicItem* a_spell, bool a_dualCast, float* a_effectStrength, RE::MagicSystem::CannotCastReason* a_reason, bool a_useBaseValueForCost);
+        static void InterruptActor(RE::Actor* a_actor, RE::MagicSystem::CastingSource a_castingSource);
+        static inline REL::Relocation<decltype(&CheckCast)> func;
+    };
+
+    class PlayerPotionUsed
+    {
+    public:
+        static void Install();
+
+    private:
+        static void PlayerUsePotion(uint64_t self, RE::AlchemyItem *alch, uint64_t extralist);
+        static inline REL::Relocation<decltype(&PlayerUsePotion)> _PlayerUsePotion;
+    };
+
+
+    static RE::ActorValue LookupActorValueByName(const char *av_name)
     {
         // SE: 0x3E1450, AE: 0x3FC5A0, VR: ---
         using func_t = decltype(&LookupActorValueByName);
@@ -76,4 +138,11 @@ namespace Hooks
         REL::Relocation<func_t> target{RELOCATION_ID(36347, 37337)};
         return target(a_actor, a_av);
     }
+
+    static bool IsQuestObject(RE::ExtraDataList* a_list) {
+        using func_t = decltype(&IsQuestObject);
+        REL::Relocation<func_t> target{ RELOCATION_ID(11913, 12052) };
+        return target(a_list);
+    }
+
 } // namespace Hooks
