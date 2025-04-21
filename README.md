@@ -1,5 +1,5 @@
 # STweaks
-Heavy gameplay changes and disease like curse system
+Heavy gameplay changes and disease like curse system   
 [nexus link](https://www.nexusmods.com/skyrimspecialedition/mods/144307)
 
 ### Requirements
