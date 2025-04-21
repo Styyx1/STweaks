@@ -84,26 +84,6 @@ namespace Hooks
         static inline REL::Relocation<decltype(ActorUpdate)> func;
     };
 
-    class LightLevel
-    {
-    public:
-        static void Install();
-
-    private:
-        static float GetLightLevelF(long a_this);
-        static inline REL::Relocation<decltype(&GetLightLevelF)> func;
-    };
-
-    class ActiveEffectHook
-    {
-    public:
-        static void InstallHook();
-
-    private:
-        static void OnAddActiveEffect(RE::MagicTarget* a_this, RE::ActiveEffect* a_effect);
-        static inline REL::Relocation<decltype(&OnAddActiveEffect)> func;
-    };
-
     class PreventCast
     {
     public: 
@@ -131,7 +111,6 @@ namespace Hooks
         static float GetGravityArrow(RE::Projectile* a_this);
         static inline REL::Relocation<decltype(&GetGravityArrow)> func;
     };
-
 
     static RE::ActorValue LookupActorValueByName(const char *av_name)
     {

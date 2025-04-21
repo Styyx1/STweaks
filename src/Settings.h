@@ -128,10 +128,7 @@ namespace Settings
         {
             return form && weapon_exceptions.contains(form);
         }
-
-
     }
-
 
     namespace Constants {
         constexpr const char* mod_name = "STweaks.esp";
@@ -144,7 +141,7 @@ namespace Settings
         const int melee_weakness_curse_ID = 0x10;
         const int bow_weakness_curse_ID = 0x13;
         const int jump_curse_ID = 0x16;
-        const int defaultMasterPackageID = 0x3eab9;
+
         constexpr const char* cure_keyword = "cleanse_curse";
         constexpr const char* curse_keyword = "stweaks_curse";
         constexpr const char* silence_key = "curse_silence";
@@ -230,8 +227,6 @@ namespace Settings
         static inline RE::SpellItem* melee_damage_curse{ nullptr };
         static inline RE::SpellItem* bow_damage_curse{ nullptr };
         static inline RE::SpellItem* jump_curse{ nullptr };
-        static inline RE::TESIdleForm* resetRootIdle{ nullptr };
-        static inline RE::TESPackage* default_master_pack{ nullptr };
 
         static inline std::vector<RE::SpellItem*> curse_list{};
 

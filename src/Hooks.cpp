@@ -392,50 +392,11 @@ namespace Hooks
         func(a_actor, a_delta);
     }
 
-    void ActiveEffectHook::InstallHook()
-    {
-        REL::Relocation<std::uintptr_t> effectVtable{RE::ActiveEffect::VTABLE[0]};
-        func = effectVtable.write_vfunc(0x01, OnAddActiveEffect);
-        logger::info("Installed active effect start hook");
-    }
-    void ActiveEffectHook::OnAddActiveEffect(RE::MagicTarget* a_this, RE::ActiveEffect* a_effect)
-    {		
-		logger::debug("Active effect added: {}", a_effect->GetBaseObject()->GetName());
-		auto actor = a_this->GetTargetAsActor();
-        if (actor)
-        {
-            logger::debug("Active effect target: {}", a_this->GetTargetAsActor()->GetName());
-        }
-        func(a_this, a_effect);
-    }
-
     void PreventCast::Install()
     {
         REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_ActorMagicCaster[0] };
         func = vtbl.write_vfunc(0x0A, CheckCast);
         logger::info("Installed interupt cast hook");
-    }
-
-    void LightLevel::Install() {
-
-        /*
-        SE ID: 36759 SE Offset: Not Found
-        AE ID: 37775 AE Offset: 0x0
-        */
-        auto &trampoline = SKSE::GetTrampoline();
-        REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(36759, 37775), REL::Relocate(0x2b, 0x2b,0x2b)}; // Actor::GetLightLevel
-        func = trampoline.write_call<5>(target.address(), &GetLightLevelF);
-        logger::info("Installed light level hook");
-    }
-    float LightLevel::GetLightLevelF(long param_1)
-    {
-        auto level = func(param_1);
-        logger::info("LightLevel: {}", level);
-
-        auto actual_level = Utility::get_gmst("iLightLevelInteriorMod")->GetSInt();
-        logger::info("LightLevel: {}", actual_level);
-
-        return level;
     }
 
     bool PreventCast::CheckCast(RE::ActorMagicCaster* a_this, RE::MagicItem* a_spell, bool a_dualCast, float* a_effectStrength, RE::MagicSystem::CannotCastReason* a_reason, bool a_useBaseValueForCost)
