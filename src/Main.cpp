@@ -12,9 +12,13 @@ void Listener(SKSE::MessagingInterface::Message *message) noexcept
         Hooks::Install();
         Settings::Forms::LoadForms();
         Events::RegisterEvents();
+        Settings::Exceptions::LoadJson();
     }
     if (message->type == SKSE::MessagingInterface::kPostLoadGame) {
         Utility::Curses::PopulateActiveCursesAfterLoad(Cache::GetPlayerSingleton());
+        if (!Settings::Values::enable_diseases.GetValue()) {
+            Utility::Curses::CleanseCurse(Cache::GetPlayerSingleton());
+        }
     }
 }
 

@@ -121,23 +121,6 @@ namespace Hooks
                     }
 
                     break;
-                case 2:
-                    if (Utility::ActiveEffectHasNewDiseaseKeyword(player, "curse_frenzy") && player->IsInCombat()) {
-                        player->SetAIDriven(true);
-                        player->DrawWeaponMagicHands(true);
-                        player->GetActorRuntimeData().boolFlags.set(RE::Actor::BOOL_FLAGS::kAttackOnSight);
-                        player->MoveToHigh();
-                        player->UpdateCombat();
-                        wasEnraged = true;
-                    }
-                    else {
-                        if (wasEnraged) {
-                            player->SetAIDriven(false);
-                            player->GetActorRuntimeData().boolFlags.reset();
-                            wasEnraged = false;
-                        }                        
-                    }
-                    break;
                 default:
                     break;
                 }
@@ -215,7 +198,12 @@ namespace Hooks
         }
         float ju_modifier = (float)sqrt(1.0 / mass);
 
-        return scale *= ju_modifier;
+        float curse_modi = 1.0f;
+        if (Utility::ActiveEffectHasNewDiseaseKeyword(actor, Settings::Constants::jump_curse_key)) {
+            curse_modi = 0.5f;
+        }
+
+        return scale *= ju_modifier * curse_modi;
     }
     void JumpHeight::Install()
     {
@@ -255,7 +243,14 @@ namespace Hooks
                         logger::debug("50% weakness curse is active, you deal {} damage", dam);
                     }
                 }
-            }        
+            }
+            if (Settings::Values::enable_quest_item_nerf.GetValue()) {
+                if (ActorHasQuestObjectInHand(player)) {
+                    if (_weap && !Settings::Exceptions::IsQuestWeaponException(_weap)) {
+                        dam *= 0.005f;
+                    }                    
+                }
+            }
         }
 
         if (Utility::ActorHasEffectWithArchetype(actor, RE::EffectArchetypes::ArchetypeID::kEtherealize) && Settings::Values::enable_etheral_change.GetValue())
@@ -296,6 +291,26 @@ namespace Hooks
         }
         return dam;
     }
+    bool DealtMeleeDamage::ActorHasQuestObjectInHand(RE::Actor* actor) {
+        if (actor) {
+            auto* rightHandItem = actor->GetEquippedEntryData(false); 
+            if (rightHandItem) {
+                if (rightHandItem->IsQuestObject()) {
+                    return true;
+                }
+            }
+
+            auto* leftHandItem = actor->GetEquippedEntryData(true);
+            if (leftHandItem) {
+                if (leftHandItem->IsQuestObject()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     void OnEffectEndHook::Install()
     {
         REL::Relocation<std::uintptr_t> effectVtable{RE::VTABLE_ScriptEffect[0]};
@@ -306,11 +321,10 @@ namespace Hooks
     {
         _effectEnd(a_this);
         auto hitEv = Events::HitEventHandler::GetSingleton();
-        if (a_this->spell && a_this->spell->GetSpellType() == RE::MagicSystem::SpellType::kDisease)
-        {
+
             if (a_this->target && a_this->GetBaseObject()->HasAnyKeywordByEditorID(Settings::Values::diseases))
             {
-				logger::debug("disease ended");
+				logger::debug("curse ended");
                 RE::Actor *aff_actor = skyrim_cast<RE::Actor *>(a_this->target);
                 if (a_this->GetBaseObject()->HasKeywordString(Settings::Values::diseases[0]))
                 {
@@ -340,7 +354,7 @@ namespace Hooks
                         aff_actor->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kMagicka, currentPenaltyM);
                     }
                 }
-            }
+            
         }
     }
 
@@ -377,24 +391,15 @@ namespace Hooks
         }
         func(a_actor, a_delta);
     }
+
     void ActiveEffectHook::InstallHook()
     {
-        /*
-        void ActiveEffect::Dispel(bool a_force)
-	{
-		using func_t = decltype(&ActiveEffect::Dispel);
-		static REL::Relocation<func_t> func{ RELOCATION_ID(33286, 34061) };
-		return func(this, a_force);
-	} to check
-        */
-
         REL::Relocation<std::uintptr_t> effectVtable{RE::ActiveEffect::VTABLE[0]};
         func = effectVtable.write_vfunc(0x01, OnAddActiveEffect);
         logger::info("Installed active effect start hook");
     }
     void ActiveEffectHook::OnAddActiveEffect(RE::MagicTarget* a_this, RE::ActiveEffect* a_effect)
-    {
-		
+    {		
 		logger::debug("Active effect added: {}", a_effect->GetBaseObject()->GetName());
 		auto actor = a_this->GetTargetAsActor();
         if (actor)
@@ -490,7 +495,6 @@ namespace Hooks
     {
         auto shooterRef = a_this->GetProjectileRuntimeData().shooter.get().get();
         auto actorShooter = shooterRef ? shooterRef->As<RE::Actor>() : nullptr;
-
         if (Utility::ActiveEffectHasNewDiseaseKeyword(actorShooter, Settings::Constants::bow_curse_key)) {
             return func(a_this) * 10.0f;
         }

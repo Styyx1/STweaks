@@ -59,6 +59,7 @@ namespace Hooks
     private:
         static float MeleeDamage(RE::TESObjectWEAP *_weap, RE::ActorValueOwner *a, float DamageMult, char isbow);
         static inline REL::Relocation<decltype(&MeleeDamage)> _MeleeDamageCall;
+        static bool ActorHasQuestObjectInHand(RE::Actor* actor);
     };
 
     class OnEffectEndHook
@@ -79,6 +80,7 @@ namespace Hooks
 
     private:
         static void ActorUpdate(RE::Character *a_actor, float a_delta);
+        
         static inline REL::Relocation<decltype(ActorUpdate)> func;
     };
 

@@ -25,14 +25,15 @@ set_config("skse_xbyak", true)
 set_config("rex_ini", true)
 
 -- packages
-add_requires("simpleini", "xbyak")
+add_requires("simpleini", "xbyak", "nlohmann_json")
 add_requires("spdlog", { configs = { header_only = false } })
+
 
 -- targets
 target("stweaks")
     -- add dependencies to target
     add_deps("commonlibsse-ng")
-    add_packages("fmt", "spdlog", "simpleini", "xbyak")
+    add_packages("fmt", "spdlog", "simpleini", "xbyak", "nlohmann_json")
 
     -- add commonlibsse-ng plugin
     add_rules("commonlibsse-ng.plugin", {

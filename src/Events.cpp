@@ -27,8 +27,8 @@ namespace Events
                 auto spellItem = RE::TESForm::LookupByID<RE::SpellItem>(a_event->source);
                 if (spellItem && Settings::Forms::disease_mod_active) {
                     logger::debug("Spell item is {}", spellItem->GetName());
-                    if(Utility::ShouldApplyCurse(Settings::Values::curse_chance.GetValue())){
-                        Utility::ApplyRandomCurse(defender, Settings::Forms::curse_list);
+                    if(Utility::Curses::ShouldApplyCurse(Settings::Values::curse_chance.GetValue())){
+                        Utility::Curses::ApplyRandomCurse(defender, Settings::Forms::curse_list);
                     }
                 }
             }            
@@ -61,11 +61,18 @@ namespace Events
 
     float HitEventHandler::CalculatePenaltyAndStoreIt(RE::Actor *a_actor, RE::ActorValue a_av, float &penalty_storage)
     {
-        float maxPenAv = GetMaxActorValue(a_actor, a_av);
+        float maxPenAv = GetMaxActorValue(a_actor, a_av) + penalty_storage;
         float newPenaltyMag = std::roundf(maxPenAv * 0.01f);
+        float maxAllowedPenalty = std::roundf(maxPenAv * 0.9f);
 		logger::debug("penalty_storage is {}", penalty_storage);
 		logger::debug("maxPenAv is {}", maxPenAv);
 		logger::debug("newPenaltyMag is {}", newPenaltyMag);
+
+        if (penalty_storage + newPenaltyMag > maxAllowedPenalty) {
+            newPenaltyMag = maxAllowedPenalty - penalty_storage;
+            newPenaltyMag = std::max(0.0f, newPenaltyMag);  // Prevent going negative
+        }
+
         penalty_storage += newPenaltyMag;
         return newPenaltyMag;
     }

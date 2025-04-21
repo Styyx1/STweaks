@@ -7,6 +7,7 @@
 #include <RE/Skyrim.h>
 #include <SKSE/SKSE.h>
 #include <REX/REX/INI.h>
+#include <nlohmann/json.hpp>
 #include <CLIBUtil/utils.hpp>
 
 #include <source_location>

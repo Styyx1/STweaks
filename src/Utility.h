@@ -336,60 +336,122 @@ public:
         return false;
     }
 
-    static RE::SpellItem* GetRandomSpell(const std::vector<RE::SpellItem*>& spells)
+    
+
+    class Timer
     {
-        if (spells.empty()) {
-            return nullptr;
-        }
-
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        std::uniform_int_distribution<std::size_t> dist(0, spells.size() - 1);
-
-        return spells[dist(gen)];
-    }
-
-    static bool ShouldApplyCurse(float chancePercent)
-    {
-        if (chancePercent <= 0.0f)
-            return false;
-        if (chancePercent >= 100.0f)
-            return true;
-
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        std::uniform_real_distribution<float> dist(0.0f, 100.0f);
-
-        return dist(gen) < chancePercent;
-    }
-
-	static void ApplyRandomCurse(RE::Actor* a_actor, const std::vector<RE::SpellItem*>& curses)
-    {
-        logger::debug("curse vector size is: {}", curses.size());
-        if (!a_actor || curses.empty())
-            return;
-
-        for (auto curse : curses) {
-            if (curse && a_actor->HasSpell(curse)) {
-                logger::debug("{} already has a curse: {}", a_actor->GetName(), curse->GetName());
-                return; // Already cursed
+    public:
+        void Start()
+        {
+            if (!running) {
+                startTime = std::chrono::steady_clock::now();
+                running = true;
             }
         }
 
-        RE::SpellItem* curse_to_add = GetRandomSpell(curses);
-        if (curse_to_add) {
-            ApplySpell(a_actor, a_actor, curse_to_add);
-            Curses::active_curses[a_actor] = curse_to_add;
-            logger::info("Applied curse {} to {}", curse_to_add->GetName(), a_actor->GetName());
-        } else {
-            logger::warn("Failed to apply curse: selected spell was null");
+        void Stop()
+        {
+            running = false;
         }
-        
-    }
+
+        void Reset()
+        {
+            startTime = std::chrono::steady_clock::now();
+        }
+
+        double ElapsedSeconds() const
+        {
+            if (!running) {
+                return 0.0;
+            }
+            auto now = std::chrono::steady_clock::now();
+            return std::chrono::duration<double>(now - startTime).count();
+        }
+
+        bool IsRunning() const
+        {
+            return running;
+        }
+
+    private:
+        std::chrono::steady_clock::time_point startTime{};
+        bool running{false};
+    };
 
     struct Curses
     {
-        static inline std::unordered_map<RE::Actor*, RE::SpellItem*> active_curses;;
+        static inline std::unordered_map<RE::Actor*, RE::SpellItem*> active_curses;
+        static inline std::unordered_map<RE::Actor*, Timer> curse_swap_timers;
+
+        static RE::SpellItem* GetRandomSpell(const std::vector<RE::SpellItem*>& spells)
+        {
+            if (spells.empty()) {
+                return nullptr;
+            }
+
+            static std::random_device rd;
+            static std::mt19937 gen(rd());
+            std::uniform_int_distribution<std::size_t> dist(0, spells.size() - 1);
+
+            return spells[dist(gen)];
+        }
+
+        static bool ShouldApplyCurse(float chancePercent)
+        {
+            if (chancePercent <= 0.0f)
+                return false;
+            if (chancePercent >= 100.0f)
+                return true;
+
+            static std::random_device rd;
+            static std::mt19937 gen(rd());
+            std::uniform_real_distribution<float> dist(0.0f, 100.0f);
+
+            return dist(gen) < chancePercent;
+        }
+
+        static void ApplyRandomCurse(RE::Actor* a_actor, const std::vector<RE::SpellItem*>& curses)
+        {
+            double CURSE_SWAP_COOLDOWN = Settings::Values::curse_swap_cooldown.GetValue(); // 60 seconds
+            logger::debug("curse vector size is: {}", curses.size());
+            if (!a_actor || curses.empty())
+                return;
+
+            // If actor already has any curse, swap instead of reapplying
+            for (auto curse : curses) {
+                if (curse && a_actor->HasSpell(curse)) {
+                    auto& timer = curse_swap_timers[a_actor];
+                    if (!timer.IsRunning() || timer.ElapsedSeconds() >= CURSE_SWAP_COOLDOWN) {
+                        RE::SpellItem* newCurse = GetRandomSpell(curses);
+                        if (newCurse && newCurse != curse) {
+                            SwapCurse(a_actor, newCurse);
+                            timer.Reset();
+                            timer.Start();
+                            return;
+                        }
+                        else {
+                            logger::debug("{} already has this curse: {}", a_actor->GetName(), curse->GetName());
+                        }
+                        return;
+                    }
+                    else {
+                        logger::debug("{} tried to swap a curse too soon. {:.1f}s remaining", a_actor->GetName(), CURSE_SWAP_COOLDOWN - timer.ElapsedSeconds());
+                    }
+                    return;
+                }
+            }
+
+            RE::SpellItem* curse_to_add = GetRandomSpell(curses);
+            if (curse_to_add) {
+                ApplySpell(a_actor, a_actor, curse_to_add);
+                Curses::active_curses[a_actor] = curse_to_add;
+                curse_swap_timers[a_actor].Start(); 
+                logger::info("Applied curse {} to {}", curse_to_add->GetName(), a_actor->GetName());
+            } else {
+                logger::warn("Failed to apply curse: selected spell was null");
+            }
+
+        }
 
         static void CleanseCurse(RE::Actor* a_actor)
         {
@@ -399,6 +461,23 @@ public:
                 active_curses.erase(it);
                 logger::info("{}'s curse has been cleansed", a_actor->GetName());
             }
+        }
+        static void SwapCurse(RE::Actor* actor, RE::SpellItem* newCurse)
+        {
+            if (!actor || !newCurse)
+                return;
+
+            // If there's already a curse, dispel it — effectEnd will handle restoration
+            for (auto& curse : Settings::Forms::curse_list) {
+                if (curse && actor->HasSpell(curse)) {
+                    CleanseCurse(actor);
+                    break;
+                }
+            }
+            // Apply the new curse
+            Utility::ApplySpell(actor, actor, newCurse);
+            active_curses[actor] = newCurse;
+            logger::info("{} has been cursed with {}", actor->GetName(), newCurse->GetName());
         }
 
         inline static void PopulateActiveCursesAfterLoad(RE::Actor* a_actor)
@@ -425,6 +504,9 @@ public:
             if (visitor.foundCurse) {
                 active_curses[a_actor] = visitor.foundCurse;
                 logger::debug("Restored active curse {} on {}", visitor.foundCurse->GetName(), a_actor->GetName());
+            }
+            else {
+                Utility::Curses::CleanseCurse(a_actor);
             }
         }
     };
