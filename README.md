@@ -1,6 +1,6 @@
-# CommonLibSSE-NG Plugin Template
-
-This is a basic plugin template using CommonLibSSE-NG.
+# STweaks
+Heavy gameplay changes and disease like curse system
+[nexus link](https://www.nexusmods.com/skyrimspecialedition/mods/144307)
 
 ### Requirements
 * [XMake](https://xmake.io) [2.8.2+]
