@@ -42,10 +42,7 @@ namespace Hooks
             PlayerPotionUsed::Install();
             HighGravityArrows::Install();
         }
-
-        LightLevel::Install();
         OnEffectEndHook::Install();
-		ActiveEffectHook::InstallHook();
         
         logger::debug("installed all hooks");
         logger::info("--------------------------------");
@@ -63,20 +60,29 @@ namespace Hooks
         _originalCall = trampoline.write_call<5>(target.address(), &CHit);
         logger::info("Installed damage taken hook");
     }
+    float CombatHit::WeaponTypeModifier(RE::TESObjectWEAP* a_weap, float f_in)
+    {
+        float f_out = f_in;
+
+        if (a_weap->IsOneHandedDagger())
+            f_out *= 2.0f;
+
+        return f_out;
+    }
     void CombatHit::RandomiseDamage(RE::Actor *a_this, RE::HitData *a_hitData)
     {
         float remaining = a_hitData->totalDamage;
+        //RE::TESObjectWEAP* weap = a_hitData->weapon;
+
         if (a_hitData->weapon && !a_hitData->weapon->IsHandToHandMelee())
         {
             logger::debug("----------------------------------------------------");
             logger::debug("started hooked damage calc for {} you got hit by: {}", a_this->GetName(), a_hitData->aggressor.get().get()->GetDisplayFullName());
-            // float rand_mult = Utility::GetRandomFloat(Settings::CalcPerc(Settings::damage_range_weapon, false), Settings::CalcPerc(Settings::damage_range_weapon, true));
             float rand_mult = Utility::GetRandomFloat(Settings::Forms::CalcPerc(weapon_lower_range.GetValue(), false), Settings::Forms::CalcPerc(weapon_upper_range.GetValue(), true));
             logger::debug("multiplier is {}", rand_mult);
             remaining *= rand_mult;
             logger::debug("new damage for melee is {}. Original damage was: {} \n", remaining, a_hitData->totalDamage);
             a_hitData->totalDamage = remaining;
-            return _originalCall(a_this, a_hitData);
         }
     }
     void CombatHit::CHit(RE::Actor *a_this, RE::HitData *a_hitData)
@@ -224,8 +230,8 @@ namespace Hooks
     {
         RE::PlayerCharacter *player = Cache::GetPlayerSingleton();
         RE::Actor *actor = skyrim_cast<RE::Actor *>(a);
-        auto dam = _MeleeDamageCall(_weap, a, DamageMult, isbow);
-        logger::debug("before if in melee damage hook for actor: {}", actor->GetDisplayFullName());
+        float dam = DamageMult;
+        logger::debug("damage mult argument is {}", DamageMult);
 
         if (actor == player)
         {
@@ -286,10 +292,9 @@ namespace Hooks
                 }
                 dam *= modifier;
                 logger::debug("\n final modifier is {} \n", modifier);
-            }
-            
+            }            
         }
-        return dam;
+        return _MeleeDamageCall(_weap, a, dam, isbow);
     }
     bool DealtMeleeDamage::ActorHasQuestObjectInHand(RE::Actor* actor) {
         if (actor) {

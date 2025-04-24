@@ -15,6 +15,7 @@ namespace Settings
         static REX::INI::Bool enable_diseases{ "Toggles", "bEnableDiseases", true };
         static REX::INI::Bool enable_fading_actors{ "Toggles", "bEnableFadingActors", true };
         static REX::INI::Bool enable_quest_item_nerf{ "Toggles", "bEnableQuestItemNerf", true };
+        static REX::INI::Bool allow_curse_swapping{ "Toggles", "bAllowCurseSwaps", true };
 
         static REX::INI::F32 sneak_height_modifier{ "SettingValues", "fSneakJumpModifier", 0.25f };
         static REX::INI::I32 weapon_upper_range{ "SettingValues", "iUpperRangeWeapons", 15 };
@@ -147,6 +148,7 @@ namespace Settings
         constexpr const char* silence_key = "curse_silence";
         constexpr const char* bow_curse_key = "curse_bow";
         constexpr const char* jump_curse_key = "curse_jump";
+
     }
 
     struct Forms

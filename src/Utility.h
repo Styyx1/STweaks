@@ -423,7 +423,7 @@ public:
                     auto& timer = curse_swap_timers[a_actor];
                     if (!timer.IsRunning() || timer.ElapsedSeconds() >= CURSE_SWAP_COOLDOWN) {
                         RE::SpellItem* newCurse = GetRandomSpell(curses);
-                        if (newCurse && newCurse != curse) {
+                        if (newCurse && newCurse != curse && Settings::Values::allow_curse_swapping.GetValue()) {
                             SwapCurse(a_actor, newCurse);
                             timer.Reset();
                             timer.Start();
