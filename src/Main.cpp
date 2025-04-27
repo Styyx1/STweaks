@@ -4,6 +4,7 @@
 #include "Settings.h"
 #include "cache.h"
 #include "serialisation.h"
+#include "papyrus.h"
 
 void Listener(SKSE::MessagingInterface::Message *message) noexcept
 {
@@ -37,6 +38,9 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse)
 
     SKSE::AllocTrampoline(1 << 10);
     Cache::CacheAddLibAddresses();
+
+    const auto papyrus = SKSE::GetPapyrusInterface();
+    papyrus->Register(Papyrus::BindAll);
 
     if (auto serialization = SKSE::GetSerializationInterface())
     {

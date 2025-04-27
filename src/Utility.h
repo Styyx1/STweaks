@@ -1,5 +1,7 @@
 #pragma once
 #include "cache.h"
+#include "Settings.h"
+
 class Utility
 {
 public:

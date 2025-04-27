@@ -160,11 +160,14 @@ namespace Settings
             logger::info("Loading Forms");
 
             auto dh = RE::TESDataHandler::GetSingleton();
-            if (auto main_file = dh->LookupModByName(Constants::mod_name); main_file && main_file->compileIndex != 0xFF) {
-                sneak_stamina_spell = dh->LookupForm<RE::SpellItem>(Constants::sneak_stamina_spell_ID, Constants::mod_name);
+            if (Values::enable_sneak_stamina.GetValue()) {
+                if (auto main_file = dh->LookupModByName(Constants::mod_name); main_file && main_file->compileIndex != 0xFF) {
+                    sneak_stamina_spell = dh->LookupForm<RE::SpellItem>(Constants::sneak_stamina_spell_ID, Constants::mod_name);
+                }
+                else
+                    SKSE::stl::report_and_fail(std::format("{} not found, please enable it.", Constants::mod_name));
             }
-            else
-                SKSE::stl::report_and_fail(std::format("{} not found, please enable it.", Constants::mod_name));
+            
             
             if (Settings::Values::enable_diseases.GetValue()) {
                 if (auto file = dh->LookupModByName(Constants::diseases_name); file && file->compileIndex != 0xFF){
@@ -198,7 +201,8 @@ namespace Settings
         }
 
         static void LogAllFormsLoaded() {
-			LogForm("Sneak Stamina Spell", sneak_stamina_spell);
+            if(Values::enable_sneak_stamina.GetValue())
+                LogForm("Sneak Stamina Spell", sneak_stamina_spell);
             if (disease_mod_active) {
                 LogForm("Health Curse", health_curse);
                 LogForm("Stamina Curse", stamina_curse);

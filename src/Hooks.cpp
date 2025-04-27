@@ -461,9 +461,11 @@ namespace Hooks
     {
         auto shooterRef = a_this->GetProjectileRuntimeData().shooter.get().get();
         auto actorShooter = shooterRef ? shooterRef->As<RE::Actor>() : nullptr;
-        if (Utility::ActiveEffectHasNewDiseaseKeyword(actorShooter, Settings::Constants::bow_curse_key)) {
-            return func(a_this) * 10.0f;
-        }
+        if (actorShooter) {
+            if (Utility::ActiveEffectHasNewDiseaseKeyword(actorShooter, Settings::Constants::bow_curse_key)) {
+                return func(a_this) * 10.0f;
+            }
+        }        
         return func(a_this);
     }
 }
