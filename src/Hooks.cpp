@@ -408,9 +408,11 @@ namespace Hooks
     {
         auto actor = a_this->actor;
         const char* curse_word = "curse_silence";
-        if (Utility::ActiveEffectHasNewDiseaseKeyword(actor, Settings::Constants::silence_key)) {
-            InterruptActor(actor, a_this->GetCastingSource());
-            return false;
+        if (Utility::ActiveEffectHasNewDiseaseKeyword(actor, Settings::Constants::silence_key)) {            
+            if (a_spell && a_spell->GetFormType() != RE::FormType::AlchemyItem && a_spell->GetFormType() != RE::FormType::Enchantment) {
+                InterruptActor(actor, a_this->GetCastingSource());
+                return false;
+            }
         }
         return func(a_this, a_spell, a_dualCast, a_effectStrength, a_reason, a_useBaseValueForCost);
     }

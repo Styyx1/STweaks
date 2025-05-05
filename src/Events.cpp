@@ -27,34 +27,49 @@ namespace Events
                 auto spellItem = RE::TESForm::LookupByID<RE::SpellItem>(a_event->source);
                 if (spellItem && Settings::Forms::disease_mod_active) {
                     logger::debug("Spell item is {}", spellItem->GetName());
-                    if(Utility::Curses::ShouldApplyCurse(Settings::Values::curse_chance.GetValue())){
+                    auto chance = Settings::Values::curse_chance.GetValue();
+					if (spellItem->GetCastingType() == RE::MagicSystem::CastingType::kConcentration) {
+						chance *= 0.10f;
+					}
+                    if(Utility::Curses::ShouldApplyCurse(chance)){
                         Utility::Curses::ApplyRandomCurse(defender, Settings::Forms::curse_list);
                     }
                 }
-            }            
+            }     
 
-            if (Utility::ActiveEffectHasNewDiseaseKeyword(defender, Settings::Values::diseases[0]))
-            {
-                // storedHealth_disease = std::min(std::max(storedHealth_disease + 1.0f, 0.0f), 99.0f);
-                float decrease_value = CalculatePenaltyAndStoreIt(defender, RE::ActorValue::kHealth, storedHealth_disease);
-                logger::debug("stored health disease is {}", storedHealth_disease);
-                defender->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, -decrease_value);
-            }
-            if (Utility::ActiveEffectHasNewDiseaseKeyword(defender, Settings::Values::diseases[1]))
-            {
-                // storedStamina_disease = std::min(std::max(storedStamina_disease + 1.0f, 0.0f), 99.0f);
-                float decrease_value_stam = CalculatePenaltyAndStoreIt(defender, RE::ActorValue::kStamina, storedStamina_disease);
-                logger::debug("stored stamina disease is {}", storedStamina_disease);
-                defender->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kStamina, -decrease_value_stam);
-            }
-            if (Utility::ActiveEffectHasNewDiseaseKeyword(defender, Settings::Values::diseases[2]))
-            {
+            auto& tick = disease_timers[defender];
+			if (!tick.IsRunning() || tick.ElapsedSeconds() > 3.0f)
+			{
+                if (Utility::ActiveEffectHasNewDiseaseKeyword(defender, Settings::Values::diseases[0]))
+                {
+                    // storedHealth_disease = std::min(std::max(storedHealth_disease + 1.0f, 0.0f), 99.0f);
+                    float decrease_value = CalculatePenaltyAndStoreIt(defender, RE::ActorValue::kHealth, storedHealth_disease);
+                    logger::debug("stored health disease is {}", storedHealth_disease);
+                    defender->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, -decrease_value);
+                }
+                if (Utility::ActiveEffectHasNewDiseaseKeyword(defender, Settings::Values::diseases[1]))
+                {
+                    // storedStamina_disease = std::min(std::max(storedStamina_disease + 1.0f, 0.0f), 99.0f);
+                    float decrease_value_stam = CalculatePenaltyAndStoreIt(defender, RE::ActorValue::kStamina, storedStamina_disease);
+                    logger::debug("stored stamina disease is {}", storedStamina_disease);
+                    defender->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kStamina, -decrease_value_stam);
+                }
+                if (Utility::ActiveEffectHasNewDiseaseKeyword(defender, Settings::Values::diseases[2]))
+                {
 
-                // storedMagicka_disease = std::min(std::max(storedMagicka_disease + 1.0f, 0.0f), 99.0f);
-                float decrease_value_mag = CalculatePenaltyAndStoreIt(defender, RE::ActorValue::kMagicka, storedMagicka_disease);
-                logger::debug("stored magicka disease is {}", storedMagicka_disease);
-                defender->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kMagicka, -decrease_value_mag);
-            }
+                    // storedMagicka_disease = std::min(std::max(storedMagicka_disease + 1.0f, 0.0f), 99.0f);
+                    float decrease_value_mag = CalculatePenaltyAndStoreIt(defender, RE::ActorValue::kMagicka, storedMagicka_disease);
+                    logger::debug("stored magicka disease is {}", storedMagicka_disease);
+                    defender->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kMagicka, -decrease_value_mag);
+                }
+                tick.Reset();
+				tick.Start(); 
+			}
+			else
+			{
+				logger::debug("{} tried to apply disease too soon. {:.1f}s remaining", defender->GetName(), 3.0f - tick.ElapsedSeconds());
+				return EventResult::kContinue;
+			}            
         }
         return EventResult::kContinue;
     }

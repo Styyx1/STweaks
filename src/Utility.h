@@ -189,6 +189,8 @@ public:
 
     static bool ActiveEffectHasNewDiseaseKeyword(RE::Actor *a_actor, std::string a_keyword)
     {
+		if (!a_actor || a_actor->IsDead() || !a_actor->Is3DLoaded())
+			return false;
         auto activeEffects = a_actor->AsMagicTarget()->GetActiveEffectList();
         RE::EffectSetting *setting = nullptr;
         if (!activeEffects->empty())
@@ -408,7 +410,7 @@ public:
             static std::random_device rd;
             static std::mt19937 gen(rd());
             std::uniform_real_distribution<float> dist(0.0f, 100.0f);
-
+			logger::debug("chance percent is {}", chancePercent);
             return dist(gen) < chancePercent;
         }
 

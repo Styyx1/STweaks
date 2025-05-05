@@ -6,7 +6,7 @@ includes("lib/commonlibsse-ng")
 
 -- set project
 set_project("stweaks")
-set_version("1.3.0")
+set_version("1.4.0")
 set_license("GPL-3.0")
 
 -- set defaults

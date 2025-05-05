@@ -21,6 +21,7 @@ namespace Events
         float storedHealth_disease = 0;
         float storedStamina_disease = 0;
         float storedMagicka_disease = 0;
+        static inline std::unordered_map<RE::Actor*, Utility::Timer> disease_timers;
 
         static void Character__invalidate_cached(RE::Actor *a, RE::ActorValue av)
         {
